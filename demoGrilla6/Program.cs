@@ -1,25 +1,36 @@
+﻿using demoGrilla6.Data;
+using demoGrilla6.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Registrar Razor Pages
 builder.Services.AddRazorPages();
+
+//  Registrar repositorio y servicio con la cadena de conexión
+builder.Services.AddScoped<PurchTableRepository>(sp =>
+    new PurchTableRepository(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<PedidoCompraService>();
+
+builder.Services.AddScoped<PurchLineRepository>(sp =>
+    new PurchLineRepository(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<PurchLineService>();
+
+builder.Services.AddScoped<VendInvoiceJourRepository>(sp =>
+    new VendInvoiceJourRepository(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<VendInvoiceJourService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthorization();
-
 app.MapRazorPages();
-
 app.Run();

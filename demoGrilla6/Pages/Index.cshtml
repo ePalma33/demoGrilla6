@@ -6,43 +6,63 @@
 
 <html lang="en">
 <head>
+
+
     <!-- Includes all JS & CSS for the JavaScript Data Grid -->
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
 </head>
 <body>
     <!-- Your Data Grid container -->
-    <div id="myGrid" style="height: 500px"></div>
+    <div id="myGrid"  style="height: 500px; width: 100%;"></div>
+
+
 
     <script>
-         // Row Data Interface
-
-        // Grid API: Access to Grid API methods
-        let gridApi;
-
-        // Grid Options: Contains all of the grid configurations
         const gridOptions = {
-          // Data to be displayed
-          rowData: [
-            { make: "Tesla", model: "Model Y", price: 64950, electric: true },
-            { make: "Ford", model: "F-Series", price: 33850, electric: false },
-            { make: "Toyota", model: "Corolla", price: 29600, electric: false },
-            { make: "Mercedes", model: "EQA", price: 48890, electric: true },
-            { make: "Fiat", model: "500", price: 15774, electric: false },
-            { make: "Nissan", model: "Juke", price: 20675, electric: false },
-          ],
-          // Columns to be displayed (Should match rowData properties)
-          columnDefs: [
-            { field: "make" },
-            { field: "model" },
-            { field: "price" },
-            { field: "electric" },
-          ],
-          defaultColDef: {
-            flex: 1,
-          },
+            columnDefs: [
+                { field: "purchId", headerName: "ID" },
+                { field: "purchName", headerName: "Nombre" },
+                { field: "orderAccount", headerName: "Cuenta" },
+                { field: "currencyCode", headerName: "Moneda" },
+                { field: "dlvMode", headerName: "Modo Entrega" },
+                { field: "purchStatus", headerName: "Estado" },
+                { field: "createdDateTime", headerName: "Fecha Creación" }
+            ],
+            defaultColDef: {
+                flex: 1,
+                sortable: true,
+                filter: true,
+                resizable: true
+            },
+            pagination: true,
+            paginationPageSize: 10,
+            paginationAutoPageSize: false //  Mantén tamaño fijo
         };
-        // Create Grid: Create new grid within the #myGrid div, using the Grid Options object
-        gridApi = agGrid.createGrid(document.querySelector("#myGrid"), gridOptions);
+
+        const gridDiv = document.querySelector("#myGrid");
+        const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+
+        //Traer TODOS los registros y dejar que AG Grid pagine
+        fetch('/Index?handler=Autos')
+            .then(response => response.json())
+            .then(result => {
+                gridApi.setGridOption('rowData', result.data);
+            });
+
+        function loadLines(purchId) {
+            fetch(`/PurchLine?handler=Lines&purchId=${encodeURIComponent(purchId)}`)
+                .then(response => response.json())
+                .then(result => {
+                    // Aquí puedes mostrar el detalle en otra AG Grid o modal
+                    console.log(result.data);
+                });
+        }
+
     </script>
+
+
+
+
 </body>
 </html>
