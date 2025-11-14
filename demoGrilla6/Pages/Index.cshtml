@@ -6,26 +6,27 @@
 
 <html lang="en">
 <head>
-
-
-    <!-- Includes all JS & CSS for the JavaScript Data Grid -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
-
+    <style>
+        .ag-theme-alpine {
+            width: 100%;
+            overflow-x: auto; /* Scroll horizontal en móviles */
+        }
+    </style>
 </head>
 <body>
-    <!-- Your Data Grid container -->
-    <div id="myGrid" class="ag-theme-alpine" style="height: 600px; width: 100%;"></div>
+    <!-- Grilla Maestro -->
+    <div id="gridMaster" class="ag-theme-alpine" style="height: 400px; margin-bottom:20px;"></div>
 
+    <!-- Grilla Detalle -->
+    <div id="gridDetail" class="ag-theme-alpine" style="height: 300px;"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const gridOptions = {
+        document.addEventListener('DOMContentLoaded', function () {
+            // Configuración Maestro
+            const masterOptions = {
                 columnDefs: [
-                    {
-                        headerName: "",
-                        cellRenderer: "agGroupCellRenderer", // ✅ Botón expandir
-                        width: 50
-                    },
                     { field: "purchId", headerName: "ID" },
                     { field: "purchName", headerName: "Nombre" },
                     { field: "orderAccount", headerName: "Cuenta" },
@@ -34,53 +35,82 @@
                     { field: "purchStatus", headerName: "Estado" },
                     { field: "createdDateTime", headerName: "Fecha Creación" }
                 ],
-                defaultColDef: {
-                    flex: 1,
-                    sortable: true,
-                    filter: true,
-                    resizable: true
-                },
+                defaultColDef: { flex: 1, sortable: true, filter: true, resizable: true },
                 pagination: true,
                 paginationPageSize: 10,
-                masterDetail: true,
-                isRowMaster: params => true, // ✅ Todas las filas son maestro
-                detailCellRendererParams: {
-                    detailGridOptions: {
-                        columnDefs: [
-                            { field: "itemId", headerName: "Artículo" },
-                            { field: "name", headerName: "Descripción" },
-                            { field: "qtyOrdered", headerName: "Cantidad" },
-                            { field: "purchPrice", headerName: "Precio Unitario" },
-                            { field: "lineAmount", headerName: "Importe" },
-                            { field: "deliveryDate", headerName: "Fecha Entrega" }
-                        ],
-                        defaultColDef: {
-                            flex: 1,
-                            sortable: true,
-                            filter: true,
-                            resizable: true
-                        }
-                    },
-                    getDetailRowData: function(params) {
-                        fetch(`/PurchLine?handler=Lines&purchId=${encodeURIComponent(params.data.purchId)}`)
-                            .then(response => response.json())
-                            .then(result => {
-                                params.successCallback(result.data);
-                            });
-                    }
-                }
+                paginationPageSizeSelector: [5, 10, 20, 50],
+                onRowClicked: function (event) {
+                    loadDetail(event.data.purchId);
+                },
+                domLayout: 'autoHeight'
             };
 
-            const gridDiv = document.querySelector("#myGrid");
-            const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+            // Configuración Detalle
+            const detailOptions = {
+                columnDefs: [
+                    { field: "itemId", headerName: "Artículo" },
+                    { field: "name", headerName: "Descripción" },
+                    { field: "qtyOrdered", headerName: "Cantidad" },
+                    { field: "purchPrice", headerName: "Precio Unitario" },
+                    { field: "lineAmount", headerName: "Importe" },
+                    { field: "deliveryDate", headerName: "Fecha Entrega" }
+                ],
+                defaultColDef: { flex: 1, sortable: true, filter: true, resizable: true },
+                domLayout: 'autoHeight'
+            };
 
-            fetch('/Index?handler=PedidoCompras')
-                .then(response => response.json())
-                .then(result => {
-                    gridApi.setGridOption('rowData', result.data);
+            const masterGrid = agGrid.createGrid(document.querySelector("#gridMaster"), masterOptions);
+            const detailGrid = agGrid.createGrid(document.querySelector("#gridDetail"), detailOptions);
+
+            // Ajuste inicial para móviles
+            applyResponsiveSettings();
+
+            // Listener para cambios de tamaño
+            window.addEventListener('resize', applyResponsiveSettings);
+
+            function applyResponsiveSettings() {
+                const isMobile = window.innerWidth < 768;
+
+                // Ocultar columnas menos importantes en móvil
+                masterOptions.columnDefs.forEach(col => {
+                    col.hide = isMobile && ["currencyCode", "dlvMode", "createdDateTime"].includes(col.field);
                 });
+                masterGrid.setGridOption('columnDefs', masterOptions.columnDefs);
+
+                // Ajustar paginación
+                masterGrid.setGridOption('paginationPageSize', isMobile ? 5 : 10);
+
+                // Ajustar columnas al ancho
+                masterGrid.sizeColumnsToFit();
+                detailGrid.sizeColumnsToFit();
+            }
+
+            // Cargar datos maestro
+            fetch('/Index?handler=PedidoCompras')
+                .then(response => {
+                    if (!response.ok) throw new Error("Error al cargar pedidos");
+                    return response.json();
+                })
+                .then(result => {
+                    masterGrid.setGridOption('rowData', result.data);
+                    masterGrid.sizeColumnsToFit();
+                })
+                .catch(err => console.error(err));
+
+            // Función para cargar detalle
+            function loadDetail(purchId) {
+                fetch(`/Index?handler=PurchLines&purchId=${encodeURIComponent(purchId)}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Error al cargar detalle");
+                        return response.json();
+                    })
+                    .then(result => {
+                        detailGrid.setGridOption('rowData', result.data);
+                        detailGrid.sizeColumnsToFit();
+                    })
+                    .catch(err => console.error(err));
+            }
         });
     </script>
-
 </body>
 </html>
