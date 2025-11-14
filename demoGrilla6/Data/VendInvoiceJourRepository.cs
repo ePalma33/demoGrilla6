@@ -17,7 +17,7 @@ namespace demoGrilla6.Data
         {
             using (var conn = new SqlConnection(_connectionString))
             {
-                string query = @"SELECT VENDGROUP, PURCHID, ORDERACCOUNT, INVOICEACCOUNT, INVOICEID, INVOICEDATE, DUEDATE, INVOICEAMOUNT, CURRENCYCODE, DESCRIPTION
+                string query = @"SELECT top 100 VENDGROUP, PURCHID, ORDERACCOUNT, INVOICEACCOUNT, INVOICEID, INVOICEDATE, DUEDATE, INVOICEAMOUNT, CURRENCYCODE, DESCRIPTION
                                  FROM VENDINVOICEJOUR";
                 return await conn.QueryAsync<VendInvoiceJour>(query);
             }

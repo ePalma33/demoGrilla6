@@ -17,7 +17,7 @@ namespace demoGrilla6.Data
         {
             using (var conn = new SqlConnection(_connectionString))
             {
-                string query = @"SELECT PURCHID, PURCHNAME, ORDERACCOUNT, CURRENCYCODE, DLVMODE, PURCHSTATUS, CREATEDDATETIME FROM PURCHTABLE";
+                string query = @"SELECT top 100 PURCHID, PURCHNAME, ORDERACCOUNT, CURRENCYCODE, DLVMODE, PURCHSTATUS, CREATEDDATETIME FROM PURCHTABLE";
                 return await conn.QueryAsync<PurchTable>(query);
             }
         }

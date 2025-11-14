@@ -14,55 +14,73 @@
 </head>
 <body>
     <!-- Your Data Grid container -->
-    <div id="myGrid"  style="height: 500px; width: 100%;"></div>
-
+    <div id="myGrid" class="ag-theme-alpine" style="height: 600px; width: 100%;"></div>
 
 
     <script>
-        const gridOptions = {
-            columnDefs: [
-                { field: "purchId", headerName: "ID" },
-                { field: "purchName", headerName: "Nombre" },
-                { field: "orderAccount", headerName: "Cuenta" },
-                { field: "currencyCode", headerName: "Moneda" },
-                { field: "dlvMode", headerName: "Modo Entrega" },
-                { field: "purchStatus", headerName: "Estado" },
-                { field: "createdDateTime", headerName: "Fecha Creación" }
-            ],
-            defaultColDef: {
-                flex: 1,
-                sortable: true,
-                filter: true,
-                resizable: true
-            },
-            pagination: true,
-            paginationPageSize: 10,
-            paginationAutoPageSize: false //  Mantén tamaño fijo
-        };
+        document.addEventListener('DOMContentLoaded', function() {
+            const gridOptions = {
+                columnDefs: [
+                    {
+                        headerName: "",
+                        cellRenderer: "agGroupCellRenderer", // ✅ Botón expandir
+                        width: 50
+                    },
+                    { field: "purchId", headerName: "ID" },
+                    { field: "purchName", headerName: "Nombre" },
+                    { field: "orderAccount", headerName: "Cuenta" },
+                    { field: "currencyCode", headerName: "Moneda" },
+                    { field: "dlvMode", headerName: "Modo Entrega" },
+                    { field: "purchStatus", headerName: "Estado" },
+                    { field: "createdDateTime", headerName: "Fecha Creación" }
+                ],
+                defaultColDef: {
+                    flex: 1,
+                    sortable: true,
+                    filter: true,
+                    resizable: true
+                },
+                pagination: true,
+                paginationPageSize: 10,
+                masterDetail: true,
+                isRowMaster: params => true, // ✅ Todas las filas son maestro
+                detailCellRendererParams: {
+                    detailGridOptions: {
+                        columnDefs: [
+                            { field: "itemId", headerName: "Artículo" },
+                            { field: "name", headerName: "Descripción" },
+                            { field: "qtyOrdered", headerName: "Cantidad" },
+                            { field: "purchPrice", headerName: "Precio Unitario" },
+                            { field: "lineAmount", headerName: "Importe" },
+                            { field: "deliveryDate", headerName: "Fecha Entrega" }
+                        ],
+                        defaultColDef: {
+                            flex: 1,
+                            sortable: true,
+                            filter: true,
+                            resizable: true
+                        }
+                    },
+                    getDetailRowData: function(params) {
+                        fetch(`/PurchLine?handler=Lines&purchId=${encodeURIComponent(params.data.purchId)}`)
+                            .then(response => response.json())
+                            .then(result => {
+                                params.successCallback(result.data);
+                            });
+                    }
+                }
+            };
 
-        const gridDiv = document.querySelector("#myGrid");
-        const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+            const gridDiv = document.querySelector("#myGrid");
+            const gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-        //Traer TODOS los registros y dejar que AG Grid pagine
-        fetch('/Index?handler=Autos')
-            .then(response => response.json())
-            .then(result => {
-                gridApi.setGridOption('rowData', result.data);
-            });
-
-        function loadLines(purchId) {
-            fetch(`/PurchLine?handler=Lines&purchId=${encodeURIComponent(purchId)}`)
+            fetch('/Index?handler=PedidoCompras')
                 .then(response => response.json())
                 .then(result => {
-                    // Aquí puedes mostrar el detalle en otra AG Grid o modal
-                    console.log(result.data);
+                    gridApi.setGridOption('rowData', result.data);
                 });
-        }
-
+        });
     </script>
-
-
-
 
 </body>
 </html>

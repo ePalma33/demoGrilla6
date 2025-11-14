@@ -17,7 +17,7 @@ namespace demoGrilla6.Data
         {
             using (var conn = new SqlConnection(_connectionString))
             {
-                string query = @"SELECT PURCHID, ITEMID, NAME, QTYORDERED, PURCHPRICE, LINEAMOUNT, DELIVERYDATE
+                string query = @"SELECT top 100 PURCHID, ITEMID, NAME, QTYORDERED, PURCHPRICE, LINEAMOUNT, DELIVERYDATE
                                  FROM PURCHLINE
                                  WHERE PURCHID = @PurchId";
                 return await conn.QueryAsync<PurchLine>(query, new { PurchId = purchId });
