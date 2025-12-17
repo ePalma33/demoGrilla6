@@ -1,0 +1,305 @@
+/* Tamaño base */
+html {
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+    #gridDetail {
+        display: block;
+    }
+    #gridPackingSlipDetail {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    #gridDetail {
+        display: none;
+    }
+    #gridPackingSlipDetail {
+        display: none;
+    }
+}
+
+
+
+/* Ajustes generales */
+body {
+    margin-bottom: 60px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: #f3f3f3;
+    color: #333;
+    margin: 0;
+}
+
+/* Focus en elementos */
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+/* Contenedor principal */
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Encabezados */
+h3, h4 {
+    font-weight: 600;
+    color: #2f2f2f;
+    margin-bottom: 15px;
+}
+
+/* Botones estilo Dynamics AX */
+.btn-primary {
+    background-color: #0078D4;
+    border: none;
+    color: #fff;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 3px;
+}
+
+    .btn-primary:hover {
+        background-color: #005a9e;
+    }
+
+/* Navbar estilo Dynamics AX */
+.navbar {
+    background-color: #0078D4 !important;
+}
+
+/*    .navbar .nav-link {
+        color: #fff !important;
+        font-weight: 500;
+    }
+*/
+        .navbar .nav-link:hover {
+            text-decoration: underline;
+        }
+
+.navbar-toggler {
+    border-color: #fff;
+}
+
+/* AG Grid estilo Dynamics AX */
+.ag-theme-alpine {
+    --ag-background-color: #ffffff;
+    --ag-header-background-color: #f3f3f3;
+    --ag-header-foreground-color: #333333;
+    --ag-odd-row-background-color: #fafafa;
+    --ag-row-hover-color: #e6f0ff;
+    --ag-border-color: #d0d0d0;
+    --ag-font-family: 'Segoe UI', Arial, sans-serif;
+    --ag-font-size: 14px;
+    --ag-header-height: 36px;
+    --ag-row-height: 32px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 14px;
+}
+
+/* Bordes suaves en la grilla */
+.ag-root-wrapper {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Encabezados de la grilla */
+.ag-header-cell-label {
+    font-weight: 600;
+    color: #2f2f2f;
+}
+
+/* Botones dentro de la grilla */
+.ag-cell button {
+    background-color: #0078D4;
+    color: #fff;
+    border: none;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+    .ag-cell button:hover {
+        background-color: #005a9e;
+    }
+
+
+.navbar-brand {
+    font-size: 1.3rem;
+}
+
+.nav-link {
+    font-size: 1rem;
+}
+
+
+.badge {
+    font-size: 13px !important;
+    font-weight: bold !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    display: inline-block !important;
+    line-height: 1 !important;
+}
+
+/* Colores estilo Bootstrap 5 */
+.estado-primary {
+    background-color: #0d6efd !important;
+    color: #fff !important;
+}
+/* Azul */
+.estado-success {
+    background-color: #198754 !important;
+    color: #fff !important;
+}
+/* Verde */
+.estado-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+/* Amarillo */
+.estado-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+/* Rojo */
+
+
+
+
+
+/******   _layout     *****/
+
+
+/* Evita que el navbar fixed-top tape el contenido */
+body {
+    padding-top: 90px; /* Ajusta si cambias altura del navbar */
+}
+
+/* Opcional: mejor accesible en móvil dentro del collapse */
+.navbar-end .btn {
+    white-space: nowrap;
+}
+
+/* Opcional: tamaño de marca y links */
+.navbar-brand {
+    font-size: 1.25rem;
+}
+
+.navbar .nav-link {
+    font-size: 1rem;
+}
+
+
+.navbar.bg-dark {
+    background-color: #003366 !important; /* Azul corporativo */
+}
+
+.navbar .nav-link {
+    color: #ffffff; /* Texto blanco */
+    transition: color 0.3s ease;
+}
+
+    .navbar .nav-link:hover {
+        color: #ffffff !important; /* Blanco en hover */
+    }
+
+
+/* --- Micro-interacciones para tarjetas --- */
+
+/* Base: prepara transición suave */
+.card {
+    transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+    will-change: transform, box-shadow;
+    border-radius: 0.5rem; /* ligeramente redondeado (opcional) */
+}
+
+/* Elevación al hover/focus dentro de columnas clicables */
+.col-6 .card:hover,
+.col-6 .card:focus-within {
+    transform: translateY(-3px); /* leve subida */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Feedback al hacer click/tap */
+.col-6 .card:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.10);
+}
+
+/* Sutil brillo para icono al hover */
+.col-6 .card:hover i {
+    filter: brightness(1.1);
+    transition: filter 220ms ease;
+}
+
+/* Entrada: fade + slide */
+.card[data-animate="in"] {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+    .card[data-animate="in"].is-visible {
+        opacity: 1;
+        transform: translateY(0);
+        transition: transform 380ms ease, opacity 380ms ease;
+    }
+
+/* Stagger (pequeño retardo por columna) */
+.row.g-3 .col-6:nth-child(1) .card[data-animate="in"] {
+    transition-delay: 40ms;
+}
+
+.row.g-3 .col-6:nth-child(2) .card[data-animate="in"] {
+    transition-delay: 90ms;
+}
+
+.row.g-3 .col-6:nth-child(3) .card[data-animate="in"] {
+    transition-delay: 140ms;
+}
+
+.row.g-3 .col-6:nth-child(4) .card[data-animate="in"] {
+    transition-delay: 190ms;
+}
+
+/* Respeto por accesibilidad: usuarios que prefieren menos movimiento */
+@@media (prefers-reduced-motion: reduce) {
+    .card, .card i {
+        transition: none !important;
+    }
+
+        .card[data-animate="in"] {
+            opacity: 1;
+            transform: none;
+        }
+}
+
+/* Opcional: mejorar el underline de los links “Ver …” dentro de la card */
+.card .card-body a {
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.35); /* blanco tenue (ajusta según bg) */
+    transition: border-color 200ms ease, opacity 200ms ease;
+}
+
+    .card .card-body a:hover,
+    .card .card-body a:focus {
+        border-bottom-color: rgba(255,255,255,0.75);
+        opacity: 0.95;
+    }
+
+
+

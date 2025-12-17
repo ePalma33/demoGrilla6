@@ -1,0 +1,223 @@
+﻿ @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Mas Errázuriz</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/demoGrilla6.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+</head>
+<body>
+
+        <header>
+
+        @{
+            var totalOc = TempData.Peek("TotalOcPendientes") ?? 0;
+            var montoPorFacturar = TempData.Peek("MontoPorFacturar") ?? 0;
+            var montoUltimoPago = TempData.Peek("MontoUltimoPago") ?? 0;
+            var fechaUltimoPago = ((DateTime)TempData.Peek("FechaUltimoPago")).ToString("dd-MM-yyyy");
+            var nombreProveedor = TempData.Peek("NombreProveedor") ?? "";
+            var numeroRecepcionSinFactura = TempData.Peek("NumeroRecepcionNoFacturada") ?? 0;
+        }
+
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+            <div class="container-fluid">
+                <!-- Brand -->
+                <a class="navbar-brand fw-bold d-flex align-items-center"  >
+                    <img src="https://maserrazuriz.cl/wp-content/uploads/2025/10/Logo-ME-Errazuriz-Blanco-scaled.png" alt="Texto alternativo de la imagen" style="width:150px; height: 50px;">
+                </a>
+
+                <span class="text-white fw-bold ms-3">@nombreProveedor  -  @User.FindFirst("Proveedor")?.Value</span>
+
+                    <!-- Right: welcome + logout (shown inside collapse) -->
+                    <div class="navbar-end d-flex flex-column flex-lg-row align-items-lg-center ms-lg-auto mt-3 mt-lg-0 gap-2">
+                        <span class="navbar-text text-white">
+                        Bienvenido, <strong>@User.Identity?.Name</strong>
+                        </span>
+                        <form asp-area="" asp-page="/Logout" method="post" class="d-inline">
+
+                            <a class="btn btn-outline-light btn-sm" asp-area="" asp-page="/Logout">
+                                <i class="fas fa-sign-out-alt me-1"></i> Logout
+                            </a>
+
+                        </form>
+                    </div>
+                </div>
+        </nav>
+
+
+
+        </header>
+
+
+    <div class="container-fluid px-4">
+        <div class="row g-3 mb-4">
+
+
+            <div class="col-6 col-md-6 col-lg-3" onclick="filtrarRecepcionNoFacturada()">
+                <div class="card text-white shadow" style="background-color: #DB7093;">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h5 class="card-title">HES no facturada</h5>
+                                <p class="card-text h3">@numeroRecepcionSinFactura</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <i class="fas fa-clock fa-3x"></i>
+                            </div>
+                        </div>
+                        <hr class="mt-2 mb-2">
+                        <a href="#" class="text-white small stretched-link" onclick="document.getElementById('facturas-tab').click(); return false;">Ver HES no facturada</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 col-lg-3" onclick="filtrarOcPendientes()">
+                <div class="card text-white bg-primary shadow">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h5 class="card-title">OC Pendientes</h5>
+                                <p class="card-text h3" id="crdOcPendientes">@totalOc</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <i class="fas fa-clipboard-list fa-3x"></i>
+                            </div>
+                        </div>
+                        <hr class="mt-2 mb-2">
+                        <a href="#" class="text-white small stretched-link" onclick="document.getElementById('oc-tab').click(); return false;">Ver Órdenes Pendientes</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 col-lg-3" onclick="filtrarMontoPorFacturar()">
+                <div class="card text-white bg-warning shadow">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h5 class="card-title">Monto por facturar</h5>
+                                <p class="card-text h3"> $@Convert.ToDecimal(montoPorFacturar).ToString("N0", new System.Globalization.CultureInfo("es-CL"))</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <i class="fas fa-dollar-sign fa-3x"></i>
+                            </div>
+                        </div>
+                        <hr class="mt-2 mb-2">
+                        <a href="#" class="text-white small stretched-link" onclick="document.getElementById('recepciones-tab').click(); return false;">Ver Guías Pendientes</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 col-lg-3" onclick="">
+                <div class="card text-white bg-success shadow">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h5 class="card-title">Monto último pago</h5>
+                                <p class="card-text h3" id="crdUltimoPago">@montoUltimoPago</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <i class="fas fa-dollar-sign fa-3x"></i>
+                            </div>
+                        </div>
+                        <hr class="mt-2 mb-2">
+                        <a href="#" class="text-white small stretched-link">Revisar pago</a>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+
+        <!--  Aquí se renderiza el contenido de cada página -->
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script>
+
+        
+        function filtrarRecepcionNoFacturada() {
+            
+            const esRecepcion = window.location.pathname.toLowerCase().includes('/recepcion');
+            if (esRecepcion) {
+                if (window.masterGrid) {
+                    const api = window.masterGrid.getGridApi?.() || window.masterGrid;
+                    api.getColumnFilterInstance('factura').then(filterInstance => {
+                    filterInstance.setModel({ type: 'blank'});
+                    api.onFilterChanged();
+
+                    });
+                } else {
+                    console.warn('masterGrid aún no está inicializado.');
+                }
+            } else {
+               window.location.href = '/Recepcion?filter=NoFacturado';
+            }
+        }
+
+        function filtrarOcPendientes() {
+            const esIndex = window.location.pathname.toLowerCase().includes('/index');
+            if (esIndex) {
+                if (window.masterGrid) {
+                    const api = window.masterGrid.getGridApi?.() || window.masterGrid;
+                    api.getColumnFilterInstance('purchStatusText').then(filterInstance => {
+                        filterInstance.setModel({ type: 'equals', filter: 'Pedido abierto' });
+                        api.onFilterChanged();
+                    });
+                } else {
+                    console.warn('masterGrid aún no está inicializado.');
+                }
+            } else {
+               window.location.href = '/Index?filter=PedidoAbierto';
+            }
+        }
+
+        function filtrarMontoPorFacturar() {
+            const esIndex = window.location.pathname.toLowerCase().includes('/index');
+            if (esIndex) {
+                if (window.masterGrid) {
+                    const api = window.masterGrid.getGridApi?.() || window.masterGrid;
+                    api.getColumnFilterInstance('documentStateText').then(filterInstance => {
+                        filterInstance.setModel({ type: 'equals', filter: 'Confirmado' });
+                        api.onFilterChanged();
+                    });
+
+                    api.getColumnFilterInstance('purchStatusText').then(filterInstance => {
+                        filterInstance.setModel({ type: 'equals', filter: 'Recibido' });
+                        api.onFilterChanged();
+                    });
+
+                } else {
+                    console.warn('masterGrid aún no está inicializado.');
+                }
+            } else {
+                window.location.href = '/Index?filter=MontoPorFacturar';
+            }
+        }
+
+
+    </script>
+
+
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    
+
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+
+
+

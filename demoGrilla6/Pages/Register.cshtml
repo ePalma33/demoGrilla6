@@ -1,0 +1,257 @@
+﻿@page
+@model demoGrilla6.Pages.RegisterModel
+@{
+    ViewData["Title"] = "Crear Usuario";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.2.0/mdb.min.css" />
+
+    <style>
+        /* Fondo y centrado del contenedor principal */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #d3d3d3, #ffffff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Contenedor cuadrado centrado */
+        .register-container {
+            background-color: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 700px; /* lado del cuadrado */
+            font-size: small;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+            .register-container h2 {
+                margin: 0 0 8px 0;
+                color: #003366;
+                font-size: 24px;
+            }
+
+        .form-group {
+            text-align: left;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 6px;
+                color: #6c757d;
+                font-size: 14px;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 14px;
+                box-sizing: border-box;
+            }
+
+
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+
+        .error-message {
+            color: #d30000;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .success-message {
+            color: #2e7d32;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        /* Responsivo: una columna en pantallas pequeñas */
+        @@media (max-width: 640px) {
+            .register-container
+
+            {
+                width: 94vw;
+                height: auto;
+            }
+
+        }
+
+        .form-outline .form-control {
+            /* font-size: small; */
+        }
+   
+        .btn-login {
+            display: inline-block;
+            width: 100%;
+            padding: 4px 24px;
+            font-size: 16px;
+            font-weight: 800;
+            color: #003366; /* Azul más oscuro */
+            background-color: #fff; /* Fondo blanco */
+            border: 2px solid #003366;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+        }
+
+            .btn-login:hover {
+                background-color: #003366;
+                color: #fff;
+            }
+
+        .form-control{
+            font-size: 16px;
+        }
+
+        .form-label{
+            font-size: 16px;
+        }
+
+        .form-outline .form-control {
+            padding-top: .52rem;
+            padding-bottom: .52rem;
+            padding-left: .85rem;
+            padding-right: .85rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <h2>Registrar</h2>
+
+        <form method="post">
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <input class="form-control" id="username" name="Input.Username" value="@Model.Input.Username" required />
+                        <label for="username" class="form-label">Nombre Usuario</label>
+                    </div>
+                 </div>
+
+                <div class="col-12 col-md-6">
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <input id="email" type="email" name="Input.Email" value="@Model.Input.Email" class="form-control" required />
+                        <label for="email" class="form-label">Email</label>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <input class="form-control" id="nombre" name="Input.Nombre" value="@Model.Input.Nombre" required />
+                        <label for="nombre" class="form-label">Nombre</label>
+                    </div>
+                </div>
+                
+                <div class="col-12 col-md-6">
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <input class="form-control"  id="apellido" name="Input.Apellido" value="@Model.Input.Apellido" required />
+                        <label for="apellido" class="form-label">Apellido</label>
+                    </div>
+                </div>
+             </div>
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <input class="form-control" id="proveedor" name="Input.Proveedor" value="@Model.Input.Proveedor" required />
+                        <label for="proveedor" class="form-label">Rut Proveedor</label>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <input class="form-control" id="password" type="password" name="Input.Password" required />
+                        <label for="password" class="form-label">Contraseña</label>
+                    </div>
+
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div data-mdb-input-init class="form-outline mb-4">
+                        <input class="form-control" id="confirm" type="password" name="Input.ConfirmPassword" required />
+                        <label for="confirm" class="form-label">Confirmar Contraseña</label>
+                    </div>
+                 </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+
+                    <div class="actions">
+                        <button type="submit" class="btn-login">Registrar</button>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6" style="text-align:end;margin-top: 20px">
+                    <a href="/Login"> Volver</a>
+                </div>
+                
+            </div>
+
+
+            <!-- Mensajes ocupan ambas columnas -->
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="error-message full-span">@Model.ErrorMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="success-message full-span">@Model.SuccessMessage</div>
+            }
+        </form>
+    </div>
+
+</body>
+</html>
+
+
+
+  <script type="module">
+    import { Input, Ripple, initMDB } from "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.2.0/mdb.es.min.js";
+
+    // Inicializa los módulos que usarás
+    initMDB({ Input, Ripple });
+  </script>
+
+
+
+
+

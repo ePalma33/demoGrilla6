@@ -1,0 +1,153 @@
+﻿@page
+@model demoGrilla6.Pages.UsuarioModel
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<html>
+<head>
+    <style>
+        .ag-theme-alpine {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .ag-row-selected {
+            background-color: #f0f9ff !important;
+            border-left: 4px solid #0d6efd;
+            font-weight: 600;
+        }
+
+
+        /* Asegura el verde de Bootstrap para aprobar */
+        .ag-cell button.btn-success {
+            background-color: #198754; /* Bootstrap success */
+            border-color: #198754;
+            color: #fff;
+        }
+
+
+        .ag-cell button.btn-danger {
+            background-color: #dc3545; /* rojo Bootstrap */
+            border-color: #dc3545;
+            color: #fff;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div style="height:30px;">
+    </div>
+
+    <ul class="nav nav-tabs" id="dataTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" asp-area="" asp-page="/Index">
+                <i class="fas fa-shopping-cart me-1"></i> Órdenes de Compra
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="oc-tab" data-bs-toggle="tab" data-bs-target="#oc-pane" type="button" role="tab" aria-controls="oc-pane" >
+                <i class="fas fa-truck me-1"></i> HES
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" asp-area="" asp-page="/Factura">
+                <i class="fas fa-money-check-alt me-1"></i> Facturas
+            </a>
+        </li>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" asp-area="" asp-page="/Usuario" aria-selected="true">
+                    <i class="fa fa-users me-1"></i> Usuarios
+                </a>
+            </li>
+        }
+
+    </ul>
+
+    <div class="tab-content border border-top-0 p-3 bg-white shadow-sm mb-5" id="dataTabContent">
+        <div id="gridUsuarios" class="ag-theme-alpine" style="height: 400px; margin-bottom:20px;"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const masterOptions = {
+                columnDefs: [
+                    { field: "id", hide: true},
+                    { field: "userName", headerName: "Usuario", minWidth: 100 },
+                    { field: "nombre", headerName: "Nombre", minWidth: 100},
+                    { field: "apellido", headerName: "Apellido", minWidth: 100},
+                    { field: "email", headerName: "Email", minWidth: 400 },
+                    { field: "isActive", headerName: "Activo", minWidth: 100},
+                    { field: "esAdmin", headerName: "Es Admin", minWidth: 100},
+                    {
+                        headerName: "Acción", minWidth: 100, colId: "acciones",
+                        cellRenderer: function (params) {
+                            const container = document.createElement('div');
+                            container.style.display = 'flex';
+                            container.style.gap = '12px'; // Espacio entre botones
+                            container.style.paddingTop= '5px'; // los centra
+
+
+                            const btnFactura = document.createElement('button');
+                            btnFactura.innerText = '';
+                            btnFactura.className = 'btn btn-danger fa fa-trash';
+                            btnFactura.addEventListener('click', function () {
+                                window.location.href = `/Usuario?handler=Modificar&idUsuario=${encodeURIComponent(params.data.id)}`;
+                            });
+                            container.appendChild(btnFactura);
+
+
+                            if (!params.data.isActive) {
+                              const btnRecepcion = document.createElement('button');
+                              btnRecepcion.className = 'btn btn-success';
+                              btnRecepcion.innerHTML = '<i class="fas fa-check-circle"></i>'; // icono de aprobar
+
+                              btnRecepcion.addEventListener('click', function (e) {
+                                e.preventDefault(); // evita cualquier navegación por defecto
+
+                                const url = `/Usuario?handler=Activar&idUsuario=${encodeURIComponent(params.data.id)}`;
+
+                                fetch(url, { method: 'GET' })
+                                  .then(() => {
+                                      location.reload();
+
+                                  })
+                                  .catch(err => {
+                                    console.error('Error al activar:', err);
+                                  });
+                              });
+
+                              container.appendChild(btnRecepcion);
+                                }
+                            
+                            return container;
+                        }
+                     }
+
+                ],
+                defaultColDef: {  sortable: true, resizable: true },
+                pagination: true,
+                paginationPageSize: 10,
+                paginationPageSizeSelector: [10, 20, 50, 100]
+
+            };
+
+
+            window.masterGrid = agGrid.createGrid(document.querySelector("#gridUsuarios"), masterOptions);
+
+            fetch(`/Usuario?handler=Data`)
+                .then(response => response.json())
+                .then(result => {
+                    masterGrid.setGridOption('rowData', result.data);
+                    masterGrid.sizeColumnsToFit();
+
+                });
+
+        });
+    </script>
+</body>
+</html>

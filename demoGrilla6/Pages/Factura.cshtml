@@ -1,0 +1,277 @@
+﻿@page
+@model FacturaModel
+@{
+    ViewData["Title"] = "Facturas";
+}
+@using System.Security.Claims
+
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .ag-theme-alpine {
+            width: 100%;
+            height:410px;
+            overflow-x: auto; /* Scroll horizontal */
+        }
+    </style>
+</head>
+<body>
+    <div style="height:30px;">
+
+    </div>
+
+
+    <ul class="nav nav-tabs" id="dataTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" asp-area="" asp-page="/Index">
+                <i class="fas fa-shopping-cart me-1"></i> Órdenes de Compra
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" asp-area="" asp-page="/Recepcion">
+                <i class="fas fa-truck me-1"></i> HES
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="oc-tab" data-bs-toggle="tab" data-bs-target="#oc-pane" type="button" role="tab" aria-controls="oc-pane" aria-selected="true">
+                <i class="fas fa-money-check-alt me-1"></i> Facturas
+            </button>
+        </li>
+
+        @if (User.IsInRole("Admin"))
+        {
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link " asp-area="" asp-page="/Usuario" >
+                <i class="fa fa-users me-1"></i> Usuarios
+                </a>
+            </li>
+        }
+
+    </ul>
+
+    <div class="table-responsive" >
+        <div id="gridFacturas" class="ag-theme-alpine"></div>
+    </div>
+
+    <div class="modal fade" id="pagosModal" tabindex="-1" aria-labelledby="pagosModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title" id="pagosModalLabel">Historial de Pagos para Factura: <span id="modalFacturaNum"></span></h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-primary" role="alert">
+                <strong>Monto Total Factura:</strong> <span id="modalMontoTotal"></span> | <strong>Saldo Pendiente:</strong> <span id="modalSaldoPendiente"></span>
+            </div>
+
+            
+                    <div class="table-responsive" >
+                        <div id="gridPagoFacturas" class="ag-theme-alpine" style="height: 250px;"></div>
+                    </div>
+            
+
+            <p class="mt-3 text-muted"></p>
+            
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const gridOptions = {
+                columnDefs: [
+                    { field: "asiento", hide: false},
+                    { field: "numFactura", headerName: "Factura", minWidth: 80, filter: true },
+                    { field: "fechaDocumento", headerName: "Fecha Documento", filter: true,valueFormatter: formatoFechaDiaMesAño, minWidth: 100 },
+                    { field: "correlativoInterno", headerName: "Correlativo Interno", minWidth: 100, hide: true  },
+                    { field: "tipoDocumento", headerName: "Tipo Documento", filter: true, minWidth: 100 },
+                    { field: "cuentaFacturacion", headerName: "Cuenta Facturación", minWidth: 100, filter: true, hide: true },
+                    { field: "ordenCompra", headerName: "Orden Compra", minWidth: 100 },
+                    { field: "divisa", headerName: "Divisa", minWidth: 70, maxWidth: 70},
+                    { field: "importeFactura", headerName: "Importe", minWidth: 100, maxWidth: 120, cellStyle: { textAlign: 'right' },
+                        valueFormatter: function (params) {
+                                return montoMonedaFormateado(params,params.data.divisa)
+                        }
+                    },
+                    { field: "impuesto", headerName: "Impuesto", minWidth: 70, maxWidth: 100,cellStyle: { textAlign: 'right' },
+                        valueFormatter: function (params) {
+                                return montoMonedaFormateado(params,params.data.divisa)
+                        }
+                    },
+                    { field: "montoPendiente", headerName: "Saldo", minWidth: 100, maxWidth: 120, cellStyle: { textAlign: 'right' },
+                        valueFormatter: function (params) {
+                                return montoMonedaFormateado(params,params.data.divisa)
+                        }
+                    },
+
+                    { field: "empresa", headerName: "Empresa",hide: true, minWidth: 100},
+                    { field: "pedidoVentas", headerName: "Pedido Ventas", hide: true, minWidth: 100 },
+                    { field: "registradoTravesEmpresaVinculada", headerName: "RTEV", minWidth: 70,hide: true},
+                    { field: "fechaVencimiento", headerName: "Fecha Vencimiento",valueFormatter: formatoFechaDiaMesAño, minWidth: 100 },
+
+                    {
+                        headerName: "Acción", colId: "acciones", minWidth: 110,
+                        cellRenderer: function (params) {
+                        const container = document.createElement('div');
+                        container.style.display = 'flex';
+                        container.style.gap = '12px';
+                        container.style.paddingTop = '2px';
+
+                        // Crear botón "Ver Pagos"
+                        const btnPagos = document.createElement('button');
+                        btnPagos.type = 'button';
+                        btnPagos.className = 'btn btn-info btn-sm';
+                        btnPagos.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Ver Pagos';
+
+                        // Atributos para Bootstrap Modal
+                        btnPagos.setAttribute('data-bs-toggle', 'modal');
+                        btnPagos.setAttribute('data-bs-target', '#pagosModal'); // El modal lo defines tú
+                        btnPagos.setAttribute('data-factura', params.data.numFactura); // Pasamos el número de factura
+                        btnPagos.setAttribute('data-proveedor', params.data.cuentaFacturacion);
+                        btnPagos.setAttribute('data-montoFactura', params.data.importeFactura);
+                        btnPagos.setAttribute('data-voucher', params.data.asiento);
+                        
+
+                        // Evento click (opcional para lógica adicional)
+                        btnPagos.addEventListener('click', function () {
+                            // Aquí puedes hacer algo antes de abrir el modal, por ejemplo:
+                            console.log('Factura seleccionada:', params.data.numFactura);
+
+                            // Si quieres cargar datos dinámicos en el modal:
+                            const modalFactura = document.querySelector('#pagosModal [data-field="factura"]');
+                            if (modalFactura) {
+                                modalFactura.textContent = params.data.numFactura;
+                            }
+                        });
+
+                        container.appendChild(btnPagos);
+                        return container;
+                        }
+                    }
+
+                ],
+                defaultColDef: {  sortable: true,  resizable: true },
+                pagination: true,
+                paginationPageSize: 10,
+                paginationPageSizeSelector: [10, 20, 50, 100], // evita warning
+                //rowSelection: { mode: 'singleRow' },
+                domLayout: 'normal', // Permite scroll horizontal
+                        onGridSizeChanged: function(params) {
+                            onResponsiveColumnsGridFactura(params, window.gridDiv);
+                        }
+            };
+
+            window.gridDiv = agGrid.createGrid(document.querySelector("#gridFacturas"), gridOptions);
+
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Cargar facturas por PurchId
+            fetch(`/Factura?handler=Factura&purchId=${encodeURIComponent('@Model.PurchId')}`)
+                .then(response => response.json())
+                .then(result => {
+                    gridDiv.setGridOption('rowData', result.data);
+                    gridDiv.sizeColumnsToFit();
+            });
+        });
+    </script>
+
+     @* Grilla modal *@
+    <script>
+
+        const pagosModal = document.getElementById('pagosModal');
+        
+        if (pagosModal) {
+            pagosModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                const facturaNum = button.getAttribute('data-factura');
+                const proveedor = button.getAttribute('data-proveedor');
+                const montoFactura = button.getAttribute('data-montoFactura');
+                const voucher = button.getAttribute('data-voucher');
+
+                // Elementos del Modal
+                const modalTitleSpan = pagosModal.querySelector('#modalFacturaNum');
+                const modalMontoTotal = pagosModal.querySelector('#modalMontoTotal');
+                const modalSaldoPendiente = pagosModal.querySelector('#modalSaldoPendiente');
+
+                modalTitleSpan.textContent = facturaNum;
+
+                // Si ya existe una grilla, destruirla antes de crear otra
+                if (window.gridDivPagoFactura ) {
+                    gridDivPagoFactura.destroy();
+                }
+
+
+                const gridOptions = {
+                columnDefs: [
+                    { field: "numeroFactura", headerName: "N° Factura", filter: true, minWidth: 80 },
+                    { field: "fechaFactura", headerName: "Fecha Factura", minWidth: 80, valueFormatter: formatoFechaDiaMesAño},
+                    { field: "proveedor", headerName: "Proveedor", minWidth: 100 },
+                    { field: "numeroPago", headerName: "N° Pago", minWidth: 160 },
+                    { field: "fechaPago", headerName: "Fecha Pago", minWidth: 80, valueFormatter: formatoFechaDiaMesAño },
+                    { field: "montoPago", headerName: "Monto Pago", minWidth: 100,
+                        valueFormatter: function (params) {
+                                  return montoMonedaFormateadoDosDecimales(params)
+                        }
+                    }
+                    
+                ],
+                    defaultColDef: {  sortable: true,  resizable: false },
+                    pagination: true,
+                    paginationPageSize: 10,
+                    domLayout: 'normal', // Permite scroll horizontal
+                };
+
+                //document.querySelector("#gridPagoFacturas") = undefined;
+                window.gridDivPagoFactura = agGrid.createGrid(document.querySelector("#gridPagoFacturas"), gridOptions);
+                
+
+                // Cargar pagos
+                fetch(`/Factura?handler=PagoFactura&idFactura=${encodeURIComponent(facturaNum)}&proveedor=${encodeURIComponent(proveedor)}&voucher=${encodeURIComponent(voucher)}`)
+                    .then(response => response.json())
+                    .then(result => {
+                        gridDivPagoFactura.setGridOption('rowData', result.data);
+                        gridDivPagoFactura.sizeColumnsToFit();
+                });
+
+                // Cargar monto pendiente
+                fetch(`/Factura?handler=TotalPendiente&idFactura=${encodeURIComponent(facturaNum)}&proveedor=${encodeURIComponent(proveedor)}&voucher=${encodeURIComponent(voucher)}`)
+                    .then(response => response.json())
+                    .then(result => {
+
+                        let saldo = result.data[0]['saldoPendiente']; // -250000.0000000000000000
+
+                        // 1. Convertir a string y quitar decimales
+                        let saldoStr = saldo.toString().replace(/\.\d+$/, ''); // "-250000"
+
+                        // 2. Agregar puntos como separador de miles
+                        let saldoFormateado = saldoStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // "-250.000"
+
+                        modalSaldoPendiente.textContent = "$" + saldoFormateado;
+                });
+
+                let saldo = montoFactura; // -250000.0000000000000000
+
+                // 1. Convertir a string y quitar decimales
+                let saldoStr = saldo.toString().replace(/\.\d+$/, ''); // "-250000"
+
+                // 2. Agregar puntos como separador de miles
+                let saldoFormateado = saldoStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // "-250.000"
+                // --- SIMULACIÓN DE DATOS ---
+                modalMontoTotal.textContent = "$" + saldoFormateado;
+                
+
+
+            })
+        }
+    </script>
+
+</body>
+</html>

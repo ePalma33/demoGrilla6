@@ -1,0 +1,765 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Orden de Compra";
+}
+@using System.Security.Claims
+
+
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   
+    <style>
+        .ag-theme-alpine {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd !important;
+            color: white !important;
+            border: none;
+            border-radius: 4px;
+        }
+
+
+        .btn-success {
+            background-color: #198754 !important; /* Verde Bootstrap */
+            color: white !important;
+            border: none;
+            border-radius: 4px;
+        }
+
+    </style>
+
+
+    <style>
+        /* Contenedor con ancho controlado y centrado */
+        .chart-wrap {
+            width: clamp(320px, 75vw, 980px);
+            margin: 0 auto;
+        }
+        /* Proporción 16:9 y responsivo */
+        .chart-box {
+            width: 100%;
+            height: 420px; /* si prefieres proporción, usa padding-top y position absolute */
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            padding: 12px;
+        }
+
+        /* Botón pill */
+        .btn-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .6rem 1rem;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: linear-gradient(180deg, #ffffff, #f7f7f9);
+            color: #374151;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .18s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        }
+
+            .btn-toggle:hover {
+                border-color: #d1d5db;
+                box-shadow: 0 4px 12px rgba(0,0,0,.08);
+                transform: translateY(-1px);
+            }
+
+            .btn-toggle:active {
+                transform: translateY(0);
+                box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            }
+
+            .btn-toggle .icon {
+                transition: transform .2s ease;
+            }
+            /* Rotamos el caret cuando está colapsado */
+            .btn-toggle[aria-expanded="false"] .icon {
+                transform: rotate(-90deg);
+            }
+
+        /* Animación de colapso del wrapper */
+        #lineRaceWrap {
+            overflow: hidden;
+            transition: height .25s ease, opacity .2s ease;
+        }
+
+            /* Oculto */
+            #lineRaceWrap.is-collapsed {
+                height: 0 !important;
+                opacity: 0;
+                padding: 0 !important;
+                margin: 0 auto !important;
+            }
+    </style>
+
+
+</head>
+<body>
+
+    <div class="container-fluid px-2">
+        <div class="row g-3 justify-content-left">
+            <div class="col-auto" style="margin-top:5px; margin-bottom:5px">
+                <button class="btn btn-light border rounded-pill px-3 d-inline-flex align-items-center gap-2"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#lineRaceCollapse"
+                        aria-expanded="true"
+                        aria-controls="lineRaceCollapse"
+                        id="toggleChartBtn">
+                    <svg class="icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <span>Ocultar gráfico</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4 justify-content-center">
+            <div class="collapse show" id="lineRaceCollapse" >
+                <div id="lineRace" class="chart-box"></div>
+            </div>
+        </div>
+    </div>
+
+    @* boton muestra oculta grafico *@
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const collapseEl = document.getElementById('lineRaceCollapse');
+          const btn        = document.getElementById('toggleChartBtn');
+
+          // Actualiza texto/ícono
+          collapseEl.addEventListener('shown.bs.collapse', function () {
+            btn.setAttribute('aria-expanded', 'true');
+            btn.querySelector('span').textContent = 'Ocultar gráfico';
+            // Recalcular tamaño de ECharts
+            if (window.myChart) window.myChart.resize();
+          });
+          collapseEl.addEventListener('hidden.bs.collapse', function () {
+            btn.setAttribute('aria-expanded', 'false');
+            btn.querySelector('span').textContent = 'Mostrar gráfico';
+          });
+        });
+    </script>
+
+    @* mantiene la opcion del mostrar u ocultar entre paginas *@
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const collapseEl = document.getElementById('lineRaceCollapse');
+          const btn        = document.getElementById('toggleChartBtn');
+          const storageKey = 'lineRaceCollapseState'; // 'show' | 'hide'
+
+          // Instancia de Bootstrap Collapse (sin auto-toggle)
+          const bsCollapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+
+          // --- Restaurar estado al cargar ---
+          const saved = localStorage.getItem(storageKey);
+          if (saved === 'show') {
+            bsCollapse.show();
+            btn.setAttribute('aria-expanded', 'true');
+            btn.querySelector('span').textContent = 'Ocultar gráfico';
+          } else if (saved === 'hide') {
+            bsCollapse.hide();
+            btn.setAttribute('aria-expanded', 'false');
+            btn.querySelector('span').textContent = 'Mostrar gráfico';
+          } else {
+            // Si no hay estado guardado, sincroniza según clase inicial
+            const isShown = collapseEl.classList.contains('show');
+            localStorage.setItem(storageKey, isShown ? 'show' : 'hide');
+            btn.setAttribute('aria-expanded', isShown ? 'true' : 'false');
+            btn.querySelector('span').textContent = isShown ? 'Ocultar gráfico' : 'Mostrar gráfico';
+          }
+
+          // --- Guardar estado cuando cambia ---
+          collapseEl.addEventListener('shown.bs.collapse', function () {
+            localStorage.setItem(storageKey, 'show');
+            btn.setAttribute('aria-expanded', 'true');
+            btn.querySelector('span').textContent = 'Ocultar gráfico';
+
+            // Si tienes un chart global y quieres animar al mostrar
+            if (window.myChart) {
+              const opt = window.myChart.getOption();
+              window.myChart.dispose();
+              window.myChart = echarts.init(document.getElementById('echartsBars'));
+              window.myChart.setOption(opt, true);
+            }
+          });
+
+          collapseEl.addEventListener('hidden.bs.collapse', function () {
+            localStorage.setItem(storageKey, 'hide');
+            btn.setAttribute('aria-expanded', 'false');
+            btn.querySelector('span').textContent = 'Mostrar gráfico';
+          });
+        });
+</script>
+
+
+    <ul class="nav nav-tabs" id="dataTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active"  id="oc-tab" data-bs-toggle="tab" data-bs-target="#oc-pane" type="button" role="tab" aria-controls="oc-pane" aria-selected="true">
+                <i class="fas fa-shopping-cart me-1"></i> Órdenes de Compra
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" asp-area="" asp-page="/Recepcion">
+                <i class="fas fa-truck me-1"></i> HES
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" asp-area="" asp-page="/Factura">
+                <i class="fas fa-money-check-alt me-1"></i> Facturas
+            </a>
+        </li>
+
+        @if (User.IsInRole("Admin"))
+        {
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link " asp-area="" asp-page="/Usuario" >
+                <i class="fa fa-users me-1"></i> Usuarios
+            </a>
+        </li>
+        }
+    </ul>
+    
+    <div class="tab-content border border-top-0 p-3 bg-white shadow-sm mb-5" id="dataTabContent">
+        <div id="gridMaster" class="ag-theme-alpine" style="height: 400px; margin-bottom:20px;"></div>
+    </div>
+
+
+    <div id="gridDetail" class="ag-theme-alpine" style="max-height: 300px; overflow-y: auto;">
+    </div>
+
+
+
+    <div class="container-fluid px-4">
+        <div class="row g-3 mb-4">
+            <!-- Primer gráfico -->
+            <div class="col-12 col-lg-6">
+                <div class="ratio ratio-4x3">
+                    <div id="echartsPie"></div>
+                </div>
+            </div>
+
+            <!-- Segundo gráfico -->
+            <div class="col-12 col-lg-6">
+
+                <div style="height: 500px;" class="w-100">
+                    <div id="echartsBars" style="height:100%;"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    @* grafico de linea *@
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+          const chartDom = document.getElementById('lineRace');
+          const myChart = echarts.init(chartDom);
+
+          const estados = ['Pedido abierto', 'Recibido', 'Facturado', 'Cancelado'];
+          const colors  = ['#5470C6', '#FAC858', '#91CC75', '#EE6666'];
+
+          // Ejemplo de datos (Year / Estado / Income)
+          const rawData = [
+            { Year: 2020, Estado: 'Pedido abierto', Income: 80  },
+            { Year: 2020, Estado: 'Recibido',       Income: 95  },
+            { Year: 2020, Estado: 'Facturado',      Income: 120 },
+            { Year: 2020, Estado: 'Cancelado',      Income: 10  },
+
+            { Year: 2021, Estado: 'Pedido abierto', Income: 90  },
+            { Year: 2021, Estado: 'Recibido',       Income: 110 },
+            { Year: 2021, Estado: 'Facturado',      Income: 140 },
+            { Year: 2021, Estado: 'Cancelado',      Income: 12  },
+
+            { Year: 2022, Estado: 'Pedido abierto', Income: 100 },
+            { Year: 2022, Estado: 'Recibido',       Income: 125 },
+            { Year: 2022, Estado: 'Facturado',      Income: 160 },
+            { Year: 2022, Estado: 'Cancelado',      Income: 15  },
+
+            { Year: 2023, Estado: 'Pedido abierto', Income: 110 },
+            { Year: 2023, Estado: 'Recibido',       Income: 135 },
+            { Year: 2023, Estado: 'Facturado',      Income: 170 },
+            { Year: 2023, Estado: 'Cancelado',      Income: 18  },
+
+            { Year: 2024, Estado: 'Pedido abierto', Income: 115 },
+            { Year: 2024, Estado: 'Recibido',       Income: 145 },
+            { Year: 2024, Estado: 'Facturado',      Income: 185 },
+            { Year: 2024, Estado: 'Cancelado',      Income: 20  },
+
+            { Year: 2025, Estado: 'Pedido abierto', Income: 120 },
+            { Year: 2025, Estado: 'Recibido',       Income: 155 },
+            { Year: 2025, Estado: 'Facturado',      Income: 200 },
+            { Year: 2025, Estado: 'Cancelado',      Income: 22  }
+          ];
+
+          const datasetWithFilters = [];
+          const seriesList = [];
+
+          estados.forEach(function (estado) {
+            const datasetId = 'dataset_' + estado;
+            datasetWithFilters.push({
+              id: datasetId,
+              fromDatasetId: 'dataset_raw',
+              transform: {
+                type: 'filter',
+                config: {
+                  and: [
+                    { dimension: 'Year', gte: 2020 },
+                    { dimension: 'Estado', '=': estado }
+                  ]
+                }
+              }
+            });
+
+            seriesList.push({
+              type: 'line',
+              datasetId: datasetId,
+              showSymbol: false,
+              name: estado,
+              endLabel: {
+                show: true,
+                formatter: function (params) {
+                  const v = Array.isArray(params.value)
+                    ? params.value[ params.encode.y[0] ]
+                    : (params.value?.Income ?? params.value);
+                  return params.seriesName + ': ' + echarts.format.addCommas(v);
+                }
+              },
+              labelLayout: { moveOverlap: 'shiftY' },
+              emphasis: { focus: 'series' },
+              encode: {
+                x: 'Year',
+                y: 'Income',
+                label: ['Estado', 'Income'],
+                itemName: 'Year',
+                tooltip: ['Income']
+              }
+            });
+          });
+
+          const option = {
+            animationDuration: 10000,
+            dataset: [
+              {
+                id: 'dataset_raw',
+                dimensions: ['Year', 'Estado', 'Income'], // <<< recomendado
+                source: rawData
+              },
+              ...datasetWithFilters
+            ],
+            title: { text: 'Evolución por estado (2020–2025)' },
+            tooltip: {
+              order: 'valueDesc',
+              trigger: 'axis',
+              valueFormatter: (val) => echarts.format.addCommas(val)
+            },
+            legend: { top: 10 },
+            color: colors,     // colores que usaste en el pie
+            xAxis: { type: 'category', nameLocation: 'middle' },
+            yAxis: { name: 'Cantidad' },
+            grid: { right: 160 },
+            series: seriesList
+          };
+
+          myChart.setOption(option);
+          window.addEventListener('resize', () => myChart.resize());
+        });
+
+
+    </script>
+
+
+    @* chart *@
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const chartDom = document.getElementById('echartsBars');
+          var myChart = echarts.init(chartDom);
+          
+          @{
+                var totalEDborrador = TempData.Peek("TotalOcEDborrador") ?? 0;
+                var totalEDenRevision = TempData.Peek("TotalOcEDenRevision") ?? 0;
+                var totalEDrechazado = TempData.Peek("TotalOcEDrechazado") ?? 0;
+                var totalEDaprobado = TempData.Peek("TotalOcEDaprobado") ?? 0;
+                var totalEDrevisionExterna = TempData.Peek("TotalOcEDrevisionExterna") ?? 0;
+                var totalEDfinalizada = TempData.Peek("TotalOcEDfinalizada") ?? 0;
+                var totalEDconfirmado = TempData.Peek("TotalOcEDconfirmado") ?? 0;
+                var totalEDdesconocido = TempData.Peek("TotalOcEDdesconocido") ?? 0;
+          }
+
+          const option = {
+            dataset: [
+              {
+                // Dataset original
+                source: [
+                  ['score', 'Can.', 'product'],
+                  [@totalEDborrador, @totalEDborrador, 'Borrador'],
+                  [@totalEDenRevision, @totalEDenRevision, 'En Revisión'],
+                  [@totalEDrechazado, @totalEDrechazado, 'Rechazado'],
+                  [@totalEDaprobado, @totalEDaprobado, 'Aprobado'],
+                  [@totalEDrevisionExterna, @totalEDrevisionExterna, 'Revisión Externa'],
+                  [@totalEDfinalizada, @totalEDfinalizada, 'Finalizada'],
+                  [@totalEDconfirmado, @totalEDconfirmado, 'Confirmado'],
+                  [@totalEDdesconocido, @totalEDdesconocido, 'Desconocido']
+                ]
+              },
+              {
+                // Dataset transformado: ordena por amount DESC
+                transform: {
+                  type: 'sort',
+                  config: { dimension: 'Can.', order: 'asc' }
+                }
+              }
+            ],
+            grid: { containLabel: true },
+            xAxis: { name: 'Can.' },
+            yAxis: { type: 'category' },
+            visualMap: {
+              orient: 'horizontal',
+              left: 'center',
+              min: 0,
+              max: @TempData.Peek("NumeroMayorED"),
+              text: ['Máximo', 'Mínimo'],
+              // Mapea la columna 'score' (índice 0) a color
+              dimension: 0,
+              inRange: {
+                // color: ['#65B581', '#FFCE34', '#FD665F']
+                color: ['#FD665F', '#FFCE34', '#65B581']
+              }
+            },
+            series: [
+              {
+                type: 'bar',
+                // Usa el dataset ya ordenado (índice 1)
+                datasetIndex: 1,
+                encode: {
+                  x: 'Can.',   // columna 'amount' al eje X
+                  y: 'product'   // columna 'product' al eje Y
+                }
+              }
+            ]
+          };
+
+
+        // Intersection Observer para mostrar/ocultar el gráfico
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                // Si el gráfico es visible, inicializa y muestra animación
+                if (!myChart) {
+                  myChart = echarts.init(chartDom);
+                  myChart.setOption(option);
+                }
+              } else {
+                // Si el gráfico deja de ser visible, destruye para liberar recursos
+                if (myChart) {
+                  myChart.dispose();
+                  myChart = null;
+                }
+              }
+            });
+          }, { threshold: 0.3 }); // 30% visible para activarse
+
+          observer.observe(chartDom);
+        });
+    </script>
+
+    <style>
+        /* Mantiene el tamaño del contenedor, solo oculta visualmente */
+        .chart-hidden {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 200ms ease-out;
+        }
+
+        .chart-visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 200ms ease-in;
+        }
+    </style>
+
+    @* chart *@
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const chartDom = document.getElementById('echartsPie');
+          const myChart = echarts.init(chartDom);
+
+            @{
+                var totalPendiente = TempData.Peek("TotalOcPendientes") ?? 0;
+                var totalRecibido = TempData.Peek("TotalOcRecibido") ?? 0;
+                var totalFacturado = TempData.Peek("TotalOcFacturado") ?? 0;
+                var totalCancelado = TempData.Peek("TotalOcCancelado") ?? 0;
+             }
+
+          const data = [
+            { value: @totalPendiente, name: 'Pedido abierto' }, // Azul
+            { value: @totalRecibido, name: 'Recibido' },       // Amarillo
+            { value: @totalFacturado, name: 'Facturado' },      // Verde
+            { value: @totalCancelado, name: 'Cancelado' }       // Rojo
+          ];
+
+          // Colores personalizados 
+          const colors = ['#5470C6', '#FAC858', '#91CC75', '#EE6666'];
+
+          // Opción con animación (solo se aplica cuando entra en pantalla)
+          const optionWithAnim = {
+            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+            color: colors,
+            series: [{
+              type: 'pie',
+              radius: ['40%', '70%'], // donut
+              avoidLabelOverlap: false,
+              itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+              label: { show: false, position: 'center' },
+              emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+              labelLine: { show: false },
+              data: data,
+              animation: true,
+              animationType: 'expansion',   // anima expandiendo desde el centro
+              animationEasing: 'cubicOut',  // suave
+              animationDuration: 1000       // 1s
+            }]
+          };
+
+          // Inicialmente no mostramos nada: instancia creada pero sin opción aplicada
+          // (para que no se vea ni se anime hasta que entre en pantalla)
+
+          // Observer: muestra y anima cuando entra; oculta y limpia cuando sale
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                // Visible → mostrar y animar
+                chartDom.classList.remove('chart-hidden');
+                chartDom.classList.add('chart-visible');
+
+                // Limpiamos y re-aplicamos con animación cada vez que aparece
+                myChart.clear();
+                myChart.setOption(optionWithAnim, true);
+              } else {
+                // No visible → ocultar y limpiar (desaparece)
+                chartDom.classList.remove('chart-visible');
+                chartDom.classList.add('chart-hidden');
+
+                // Limpia el lienzo (ahorra GPU y evita que quede dibujado)
+                myChart.clear();
+              }
+            });
+          }, {
+            threshold: 0.5 // 50% del gráfico debe estar visible para activar
+          });
+
+          observer.observe(chartDom);
+
+          // Responsivo
+          window.addEventListener('resize', () => {
+            myChart.resize();
+          });
+        });
+    </script>
+
+
+    @* grillas *@
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const masterOptions = {
+                columnDefs: [
+                    { field: "purchId", headerName: "N° Orden", filter: true , minWidth: 120},
+                    { field: "purchName", headerName: "Proveedor", filter: true, minWidth: 350, hide: true},
+                    { field: "orderAccount", headerName: "Cuenta", minWidth: 110, hide: true },
+                    { field: "documentStateText", headerName: "Estado Aprobacion", minWidth: 100,  filter: true },
+                    { field: "purchStatusText", headerName: "Estado",  filter: true, minWidth: 100,
+
+                            cellRenderer: function (params) {
+                                const estado = params.value || "";
+                                const span = document.createElement('span');
+                                span.classList.add('badge');
+
+                                if (estado === "Recibido") {
+                                    span.classList.add('estado-warning');
+                                } else if (estado === "Facturado") {
+                                    span.classList.add('estado-success');
+                                }
+                                else if (estado === "Cancelado") {
+                                            span.classList.add('estado-danger'); // Rojo
+                                }
+                                else if(estado === "Pedido abierto"){
+                                    span.classList.add('estado-primary');   // Azul
+                                }
+                                else {
+                                        span.classList.add('estado-secondary');
+                                    }
+
+                                span.innerText = estado;
+                                return span;
+                            }
+
+                    },
+
+                    {
+                        field: "totalAmount",
+                        headerName: "Importe",
+                        minWidth: 130,
+                        valueFormatter: function (params) {
+
+                              return montoMonedaFormateado(params,params.data.currencyCode)
+
+                        },
+                        cellStyle: { textAlign: 'right' } // alineado a la derecha
+                    },
+
+                    { field: "currencyCode", headerName: "Moneda",maxWidth: 100, minWidth: 100},
+                    {
+                        headerName: "Acción", minWidth: 100, colId: "acciones",
+                        cellRenderer: function (params) {
+                            const container = document.createElement('div');
+                            container.style.display = 'flex';
+                            container.style.gap = '12px'; // Espacio entre botones
+                            container.style.paddingTop= '5px'; // los centra
+
+
+                            // Botón Recepción (azul)
+                            const btnRecepcion = document.createElement('button');
+                            btnRecepcion.innerText = '';
+                            btnRecepcion.className = 'btn btn-primary fa fa-truck';
+                            btnRecepcion.addEventListener('click', function () {
+                                window.location.href = `/Recepcion?purchId=${encodeURIComponent(params.data.purchId)}`;
+                            });
+
+                            // Botón Factura (verde)
+                            const btnFactura = document.createElement('button');
+                            btnFactura.innerText = '';
+                            btnFactura.className = 'btn btn-success fas fa-money-check-alt'; // Clase para verde
+                            btnFactura.addEventListener('click', function () {
+                                window.location.href = `/Factura?handler=FacturaById&purchId=${encodeURIComponent(params.data.purchId)}`;
+                            });
+
+                            // Agregar ambos botones al contenedor
+                            container.appendChild(btnRecepcion);
+                            container.appendChild(btnFactura);
+
+                            return container;
+                        }
+                     }
+
+                ],
+                defaultColDef: {  sortable: true},
+                pagination: true,
+                paginationPageSize: 10,
+                paginationPageSizeSelector: [10, 20, 50, 100], // evita warning
+                //rowSelection: { mode: 'singleRow' },
+                onRowClicked: function (event) {
+                    loadDetail(event.data.purchId);
+                },
+                onGridSizeChanged: onResponsiveColumnsGridCabOC  // evento para ajustar al cambiar tamaño
+            };
+
+            const detailOptions = {
+                domLayout: 'autoHeight', // Permite que la altura se ajuste al contenido
+                columnDefs: [
+                    { field: "itemId", headerName: "Cod. Artículo", minWidth: 14,minWidth: 120 },
+                    { field: "name", headerName: "Descripción", minWidth: 550 },
+                    { field: "purchqty", headerName: "Cantidad", minWidth: 80 },
+                    { field: "purchPrice", headerName: "Precio Unitario", minWidth: 110 ,
+                        valueFormatter: function (params) {
+                            const v = Number(params.value);
+                            if (isNaN(v)) return '';
+
+                            const enteroConMiles = Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                            return `$ ${enteroConMiles}`;
+                        },
+                        cellStyle: { textAlign: 'right' }
+                    },
+                    { field: "lineAmount", headerName: "Importe Neto", minWidth: 110,
+                        valueFormatter: function (params) {
+                            const v = Number(params.value);
+                            if (isNaN(v)) return '';
+
+                            const enteroConMiles = Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                            return `$ ${enteroConMiles}`;
+                        },
+                        cellStyle: { textAlign: 'right' }
+                    },
+                    { field: "deliveryDate", headerName: "Fecha Entrega", valueFormatter: formatoFechaDiaMesAño, minWidth: 120}
+                ],
+                defaultColDef: { flex: 1, sortable: true}
+            };
+
+            window.masterGrid = agGrid.createGrid(document.querySelector("#gridMaster"), masterOptions);
+            const detailGrid = agGrid.createGrid(document.querySelector("#gridDetail"), detailOptions);
+
+            fetch('/Index?handler=PedidoCompras')
+                .then(response => response.json())
+                .then(result => {
+                    
+                    masterGrid.setGridOption('rowData', result.data);
+                    masterGrid.sizeColumnsToFit();
+
+                    //filtro tarjetas
+                    const urlParams = new URLSearchParams(window.location.search);
+
+                    if (urlParams.get('filter') === 'PedidoAbierto') {
+                        const api = window.masterGrid.getGridApi?.() || window.masterGrid;
+                        api.getColumnFilterInstance('purchStatusText').then(filterInstance => {
+                            filterInstance.setModel({ type: 'equals', filter: 'Pedido abierto' });
+                            api.onFilterChanged();
+                        });
+                    }
+
+                    if (urlParams.get('filter') === 'MontoPorFacturar') {
+                        const api = window.masterGrid.getGridApi?.() || window.masterGrid;
+                        api.getColumnFilterInstance('documentStateText').then(filterInstance => {
+                            filterInstance.setModel({ type: 'equals', filter: 'Confirmado' });
+                            api.onFilterChanged();
+                        });
+
+                        api.getColumnFilterInstance('purchStatusText').then(filterInstance => {
+                            filterInstance.setModel({ type: 'equals', filter: 'Recibido' });
+                            api.onFilterChanged();
+                        });
+                    }
+
+
+                });
+
+            function loadDetail(purchId) {
+                fetch(`/Index?handler=PurchLines&purchId=${encodeURIComponent(purchId)}`)
+                    .then(response => response.json())
+                    .then(result => {
+                        detailGrid.setGridOption('rowData', result.data);
+                        detailGrid.sizeColumnsToFit();
+
+                    });
+            }
+        });
+
+        if(typeof onResponsiveColumnsGridCabOC === "function" ){
+            // Ejecuta una vez al cargar:
+            onResponsiveColumnsGridCabOC({ api: window.masterGrid.getGridApi?.() || window.masterGrid });
+
+            // Reacciona a cambios de tamaño (rotación, resize, etc.)
+            window.addEventListener('resize', () => {
+              onResponsiveColumnsGridCabOC({ api: window.masterGrid.getGridApi?.() || window.masterGrid });
+            });
+        }
+
+
+    </script>
+</body>
+</html>
