@@ -91,7 +91,7 @@ namespace demoGrilla6.Pages
                 WHERE Id = @Id",
                 new { Id = prt.Id });
 
-            return RedirectToPage("/Account/ResetPasswordConfirmation");
+            return RedirectToPage("/ResetPasswordConfirmation");
         }
 
         private static string HashPassword(string password, string salt)

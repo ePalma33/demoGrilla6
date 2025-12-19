@@ -1,9 +1,15 @@
+using Dapper;
+using demoGrilla6.Configuration;
 using demoGrilla6.Data;
 using demoGrilla6.Models;
 using demoGrilla6.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.SqlClient;
 using System.Globalization;
+using System.Net;
+using System.Net.Mail;
+using System.Text.Encodings.Web;
 
 namespace demoGrilla6.Pages
 {
@@ -14,14 +20,13 @@ namespace demoGrilla6.Pages
         private readonly PagoFacturaRepository _pagoFacturaRepository;
         private readonly RecepcionCabRepository _recepcionRepository;
 
+
         public async Task<IActionResult> OnGetAsync()
         {
             // Solo carga si está vacío o no existe
             if (TempData.Peek("TotalOcPendientes") == null)
             {
                 await CargarTempDataAsync();
-                // Si quieres que sobreviva al siguiente request, puedes llamar:
-                // TempData.Keep(); // o Keep("MontoPorFacturar") para un key concreto
             }
 
             return Page(); // Renderiza la vista Index y el _Layout en el mismo request

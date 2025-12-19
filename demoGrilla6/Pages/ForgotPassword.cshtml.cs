@@ -17,6 +17,9 @@ namespace demoGrilla6.Pages
         private readonly UrlEncoder _urlEncoder;
         private readonly AppSettings _appSettings;
 
+        [TempData] public bool ShowSavedModal { get; set; }
+        [TempData] public string? SavedModalText { get; set; }
+
         public ForgotPasswordModel(
             IConfiguration config,
             IEmailSender emailSender,
@@ -38,6 +41,7 @@ namespace demoGrilla6.Pages
         {
             if (string.IsNullOrWhiteSpace(Email))
             {
+       
                 ModelState.AddModelError(string.Empty, "Debes ingresar tu correo.");
                 return Page();
             }
@@ -51,8 +55,9 @@ namespace demoGrilla6.Pages
             // Esto mejora la privacidad y evita enumeración de usuarios.
             if (user == null)
             {
-                TempData["Info"] = "Si el correo existe, te enviaremos un enlace de recuperación.";
-                return RedirectToPage("/ForgotPasswordConfirmation");
+                ShowSavedModal = true;
+                SavedModalText = "Si el correo existe, te enviaremos un enlace de recuperación.";
+                return Page();
             }
 
             var token = Guid.NewGuid().ToString("N");
@@ -67,7 +72,7 @@ namespace demoGrilla6.Pages
 
             var subject = "Recuperación de contraseña";
             var body = $@"
-                Hola,
+                Hola {user.Nombre} {user.Apellido},
                 Has solicitado recuperar tu contraseña. Usa este enlace (válido por 30 minutos):
                 {resetUrl}
 
@@ -75,7 +80,11 @@ namespace demoGrilla6.Pages
 
             await _emailSender.SendEmailAsync(user.Email, subject, body);
 
-            return RedirectToPage("/ForgotPasswordConfirmation");
+
+            ShowSavedModal = true;
+            SavedModalText = "Si el correo existe, te enviaremos un enlace de recuperación.";
+
+            return RedirectToPage("/Login");
         }
 
     }

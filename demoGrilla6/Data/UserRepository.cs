@@ -3,6 +3,7 @@
 using Dapper;
 using demoGrilla6.Models;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -22,8 +23,17 @@ namespace demoGrilla6.Data
             const string sql = @"
                 SELECT TOP 1 [Id], [UserName], [Email], [PasswordHash], [IsActive], [CreatedAt], Proveedor
                 FROM [Users]
-                WHERE [UserName] = @userName AND [IsActive] = 1";
+                WHERE [UserName] = @userName ";
             return await _db.QueryFirstOrDefaultAsync<User>(sql, new { userName });
+        }
+
+        public async Task<User?> GetByUserEmailAsync(string email)
+        {
+            const string sql = @"
+                SELECT TOP 1 [Id], [UserName], [Email], [PasswordHash], [IsActive], [CreatedAt], Proveedor
+                FROM [Users]
+                WHERE [Email] = @email ";
+            return await _db.QueryFirstOrDefaultAsync<User>(sql, new { email });
         }
 
         public async Task<User?> GetByIdAsync(int id)
@@ -65,6 +75,8 @@ namespace demoGrilla6.Data
 
         public async Task<IEnumerable<User>> GetAllAsync(string rutProveedor)
         {
+            //AND ur.RoleId<> 1
+
             const string sql = @"
                 SELECT [Id], [UserName], [Email], [PasswordHash], [IsActive], [CreatedAt], Proveedor, Nombre, Apellido,
                         CASE 
@@ -74,7 +86,9 @@ namespace demoGrilla6.Data
 
                 FROM [Users] U
                     inner join UserRoles ur on ur.UserId = U.Id
-                WHERE Proveedor = @rutProveedor";
+                WHERE 
+                     Proveedor = @rutProveedor
+                ";
             return await _db.QueryAsync<User>(sql, new { rutProveedor });
         }
 
@@ -87,8 +101,34 @@ namespace demoGrilla6.Data
 
             // Devuelve éxito si se actualizó al menos una fila
             return new JsonResult(new { success = filas > 0, affected = filas });
+        }
+
+        public async Task<JsonResult> OnPostGuardarAsync(User usuario)
+        {
+            const string sql = @"
+                UPDATE Users SET 
+                    Email = @Email,
+                    Nombre = @Nombre,
+                    Apellido = @Apellido,
+                    UserName = @UserName,
+                    IsActive = @IsActive
+                where 
+                Id=@Id;
+            
+                update UserRoles
+                set RoleId = case when @EsAdmin=1 then 1 else 2 end
+                where 
+                UserId = @Id";
+
+            var filas = await _db.ExecuteAsync(sql, new { usuario.Email, usuario.Id, usuario.Nombre, usuario.Apellido,
+                usuario.EsAdmin, usuario.UserName, usuario.IsActive});
+
+            // Devuelve éxito si se actualizó al menos una fila
+            return new JsonResult(new { success = filas > 0, affected = filas });
+
 
         }
+
 
     }
 }

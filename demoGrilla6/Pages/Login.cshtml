@@ -114,8 +114,6 @@
     </style>
 </head>
 <body>
-    
-
     <div class="login-container">
         <img src="~/images/logoerrazuriz.png" style="text-align:right" />
         
@@ -124,22 +122,10 @@
                 <label for="username">Usuario</label>
                 <input type="text" id="username" name="Input.Username" required value="EPalma" />
 
-
-                <!-- Alternativa:
-                <input asp-for="Input.Username" />
-                <span asp-validation-for="Input.Username"></span> -->
-
             </div>
             <div class="form-group">
                 <label for="password">Contraseña</label>
                 <input type="password" id="password" name="Input.Password" required value="Admin123!" />
-
-
-                <!-- Alternativa:
-                <input asp-for="Input.Password" type="password" />
-                <span asp-validation-for="Input.Password"></span> -->
-
-
             </div>
             <button type="submit" class="btn-login">Entrar</button>
 
@@ -162,13 +148,61 @@
             </div>
             
 
-
-
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
             {
                 <div class="error-message">@Model.ErrorMessage</div>
             }
+
         </form>
     </div>
 </body>
 </html>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.0.0/dist/js/coreui.bundle.min.js"></script>
+
+
+
+@{
+    bool showSaved = TempData["ShowSavedModal"] as bool? ?? false;
+    string msg = TempData["SavedModalText"] as string ?? "Operación realizada.";
+}
+
+<!-- Contenedor del modal (puede ir al final del body) -->
+<div class="modal fade" id="savedModal" tabindex="-1"
+     data-coreui-backdrop="static"   <!-- ⬅️ CoreUI/Bootstrap: backdrop 'static' evita cierre al click fuera -->
+     data-coreui-keyboard="false"    <!-- ⬅️ Desactiva cierre con ESC -->
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header">
+        <h5 class="modal-title">Registro completado</h5>
+      </div>
+      <div class="modal-body">
+        @msg
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-primary" asp-page="/Index">Aceptar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (showSaved)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const el = document.getElementById('savedModal');
+          // Inicialización por JS (CoreUI) – el backdrop 'static' ya está en data-atributo
+          const modal = new coreui.Modal(el, { /* puedes repetir opciones aquí si prefieres */ });
+          modal.show();
+        });
+    </script>
+}
+
+
+
+
+
+
+

@@ -84,36 +84,28 @@ namespace demoGrilla6.Data
 
         public async Task<IEnumerable<RecepcionNoFacturada>> GetNumeroNoFacturadoAsync(string proveedor)
         {
-            string filtroProveedor = "";
-
-            if (proveedor != "admin")
-            {
-                filtroProveedor = "AND vpsj.InvoiceAccount = '" + proveedor + "'";
-            }
 
             using (var conn = new SqlConnection(_connectionString))
             {
                 string query = @"
 
-                    SELECT 
-                        sum(
-                        CASE 
-                            WHEN vij.INVOICEID IS NULL THEN 1 
-                            ELSE 0 
-                        END) AS numero
-                    FROM VendPackingSlipJour vpsj
-                    OUTER APPLY (
-                        SELECT TOP 1 SOURCEDOCUMENTLINE
-                        FROM VendPackingSlipTrans tt
-                        WHERE tt.PackingSlipId = vpsj.PackingSlipId
-                    ) vpst
-                    LEFT JOIN VendInvoicePackingSlipQuantityMatch vipsqm ON vipsqm.PACKINGSLIPSOURCEDOCUMENTLINE = vpst.SOURCEDOCUMENTLINE
-                    LEFT JOIN VendInvoiceTrans vit on vit.SOURCEDOCUMENTLINE = vipsqm.INVOICESOURCEDOCUMENTLINE
-                    LEFT JOIN VendInvoiceJour  vij on vij.INVOICEID = vit.INVOICEID and vij.INVOICEACCOUNT = vpsj.InvoiceAccount
-                    where 
-                        1 = 1 " + filtroProveedor ;
+                    SELECT COUNT(*) AS numero
+                    FROM VendPackingSlipJour AS vpsj
+                    WHERE vpsj.InvoiceAccount = @Proveedor
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM VendPackingSlipTrans AS tt
+                          JOIN VendInvoicePackingSlipQuantityMatch AS vipsqm
+                            ON vipsqm.PACKINGSLIPSOURCEDOCUMENTLINE = tt.SOURCEDOCUMENTLINE
+                          JOIN VendInvoiceTrans AS vit
+                            ON vit.SOURCEDOCUMENTLINE = vipsqm.INVOICESOURCEDOCUMENTLINE
+                          JOIN VendInvoiceJour AS vij
+                            ON vij.INVOICEID = vit.INVOICEID
+                           AND vij.INVOICEACCOUNT = vpsj.InvoiceAccount
+                          WHERE tt.PackingSlipId = vpsj.PackingSlipId
+                      )";
 
-                return await conn.QueryAsync<RecepcionNoFacturada>(query);
+                return await conn.QueryAsync<RecepcionNoFacturada>(query, new { Proveedor = proveedor });
             }
         }
     }

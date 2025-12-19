@@ -168,7 +168,6 @@
                 </div>
             </div>
 
-
             <div class="row">
                 <div class="col-12 col-md-6">
                     <div data-mdb-input-init class="form-outline mb-4">
@@ -193,7 +192,6 @@
                     </div>
                 </div>
             </div>
-
 
             <div class="row">
                 <div class="col-12 col-md-6">
@@ -227,7 +225,17 @@
             </div>
 
 
-            <!-- Mensajes ocupan ambas columnas -->
+            <div class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        Hello, world! This is a toast message.
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-coreui-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+
+
+@*             <!-- Mensajes ocupan ambas columnas -->
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
             {
                 <div class="error-message full-span">@Model.ErrorMessage</div>
@@ -235,14 +243,14 @@
             @if (!string.IsNullOrEmpty(Model.SuccessMessage))
             {
                 <div class="success-message full-span">@Model.SuccessMessage</div>
-            }
+            } *@
         </form>
     </div>
 
 </body>
 </html>
 
-
+<script src="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.0.0/dist/js/coreui.bundle.min.js"></script>
 
   <script type="module">
     import { Input, Ripple, initMDB } from "https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.2.0/mdb.es.min.js";
@@ -252,6 +260,32 @@
   </script>
 
 
+@{
+    bool showError = TempData["ShowErrorToast"] as bool? ?? false;
+    string errorText = TempData["ErrorToastText"] as string ?? "Ocurrió un error.";
+}
 
+@if (showError)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080;">
+        <div id="errorToastLogin" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">@errorText</div>
+                <!-- Si lo quieres sin botón, quita el siguiente bloque -->
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-coreui-dismiss="toast" aria-label="Cerrar"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const el = document.getElementById('errorToastLogin');
+          if (el) {
+            const toast = new coreui.Toast(el, { autohide: true, delay: 6000 });
+            toast.show();
+          }
+        });
+    </script>
+}
 
 

@@ -33,6 +33,21 @@
             color: #fff;
         }
 
+        .form-check {
+            padding-left: 2.1em;
+        }
+
+
+        .toast.text-bg-success {
+            background-color: #198754 !important; /* Verde Bootstrap */
+            color: #fff !important;
+        }
+
+        .toast.text-bg-danger {
+            background-color: #dc3545 !important; /* Rojo Bootstrap */
+            color: #fff !important;
+        }
+
 
     </style>
 </head>
@@ -47,9 +62,9 @@
             </a>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="oc-tab" data-bs-toggle="tab" data-bs-target="#oc-pane" type="button" role="tab" aria-controls="oc-pane" >
+            <a class="nav-link" asp-area="" asp-page="/Recepcion">
                 <i class="fas fa-truck me-1"></i> HES
-            </button>
+            </a>
         </li>
         <li class="nav-item" role="presentation">
             <a class="nav-link" asp-area="" asp-page="/Factura">
@@ -74,80 +89,294 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const masterOptions = {
-                columnDefs: [
-                    { field: "id", hide: true},
-                    { field: "userName", headerName: "Usuario", minWidth: 100 },
-                    { field: "nombre", headerName: "Nombre", minWidth: 100},
-                    { field: "apellido", headerName: "Apellido", minWidth: 100},
-                    { field: "email", headerName: "Email", minWidth: 400 },
-                    { field: "isActive", headerName: "Activo", minWidth: 100},
-                    { field: "esAdmin", headerName: "Es Admin", minWidth: 100},
-                    {
-                        headerName: "Acción", minWidth: 100, colId: "acciones",
-                        cellRenderer: function (params) {
-                            const container = document.createElement('div');
-                            container.style.display = 'flex';
-                            container.style.gap = '12px'; // Espacio entre botones
-                            container.style.paddingTop= '5px'; // los centra
+          const masterOptions = {
+            columnDefs: [
+              { field: "id", hide: true },
+              { field: "userName", headerName: "Usuario", minWidth: 100 },
+              { field: "nombre", headerName: "Nombre", minWidth: 100 },
+              { field: "apellido", headerName: "Apellido", minWidth: 100 },
+              { field: "email", headerName: "Email", minWidth: 400 },
+              { field: "isActive", headerName: "Activo", minWidth: 100 },
+              { field: "esAdmin", headerName: "Es Admin", minWidth: 100 },
+              {
+                headerName: "Acción", minWidth: 140, colId: "acciones",
+                cellRenderer: function (params) {
+                  const container = document.createElement('div');
+                  container.style.display = 'flex';
+                  container.style.gap = '12px';
+                  container.style.paddingTop = '5px';
 
+                  // === Botón MODIFICAR: abre modal y carga datos ===
+                  const btnModificar = document.createElement('button');
+                  btnModificar.type = 'button';
+                  btnModificar.className = 'btn btn-primary';
+                  btnModificar.innerHTML = '<i class="fa fa-edit me-1"></i> ';
+                  btnModificar.addEventListener('click', function () {
+                    const d = params.data;
 
-                            const btnFactura = document.createElement('button');
-                            btnFactura.innerText = '';
-                            btnFactura.className = 'btn btn-danger fa fa-trash';
-                            btnFactura.addEventListener('click', function () {
-                                window.location.href = `/Usuario?handler=Modificar&idUsuario=${encodeURIComponent(params.data.id)}`;
+                    // Poblar formulario del modal
+                    document.getElementById('idUsuario').value = d.id ?? '';
+                    document.getElementById('userName').value  = d.userName ?? '';
+                    document.getElementById('nombre').value    = d.nombre ?? '';
+                    document.getElementById('apellido').value  = d.apellido ?? '';
+                    document.getElementById('email').value     = d.email ?? '';
+                    document.getElementById('isActive').checked = !!d.isActive;
+                    document.getElementById('esAdmin').checked  = !!d.esAdmin;
+
+                    // Abrir modal
+                    const modalEl = document.getElementById('usuarioModal');
+                    const modal   = new bootstrap.Modal(modalEl);
+                    modal.show();
+                  });
+                  container.appendChild(btnModificar);
+
+                  // === Botón ACTIVAR (solo si no está activo) ===
+                  if (!params.data.isActive) {
+                    const btnActivar = document.createElement('button');
+                    btnActivar.type = 'button';
+                    btnActivar.className = 'btn btn-success';
+                    btnActivar.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    btnActivar.title = 'Activar';
+
+                    btnActivar.addEventListener('click', function (e) {
+                      e.preventDefault();
+
+                      const url = `/Usuario?handler=Activar&idUsuario=${encodeURIComponent(params.data.id)}`;
+                      fetch(url, { method: 'GET' })
+                        .then(() => {
+                          // Ideal: actualizar la fila en vez de recargar
+                          masterGrid.applyTransaction({ update: [{ ...params.data, isActive: true }] });
+
+                            showToast({
+                                title: 'Usuario guardado',
+                                message: `Se guardó correctamente.`,
+                                type: 'success',
+                                delay: 3500
                             });
-                            container.appendChild(btnFactura);
+                        })
+                        .catch(err => console.error('Error al activar:', err));
+                    });
+                    container.appendChild(btnActivar);
+                  }
+
+                  return container;
+                }
+              }
+            ],
+            defaultColDef: { sortable: true, resizable: true },
+            pagination: true,
+            paginationPageSize: 10,
+            paginationPageSizeSelector: [10, 20, 50, 100],
+
+            // Necesario para actualizar filas por id
+            getRowId: params => String(params.data.id)
+          };
+
+          window.masterGrid = agGrid.createGrid(document.querySelector("#gridUsuarios"), masterOptions);
+
+          fetch(`/Usuario?handler=Data`)
+            .then(response => response.json())
+            .then(result => {
+              masterGrid.setGridOption('rowData', result.data);
+              masterGrid.sizeColumnsToFit();
+            });
 
 
-                            if (!params.data.isActive) {
-                              const btnRecepcion = document.createElement('button');
-                              btnRecepcion.className = 'btn btn-success';
-                              btnRecepcion.innerHTML = '<i class="fas fa-check-circle"></i>'; // icono de aprobar
+          document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
 
-                              btnRecepcion.addEventListener('click', function (e) {
-                                e.preventDefault(); // evita cualquier navegación por defecto
+          const formData = new FormData();
+          formData.append('id', document.getElementById('idUsuario').value || 0);
+          formData.append('userName', document.getElementById('userName').value.trim());
+          formData.append('nombre', document.getElementById('nombre').value.trim());
+          formData.append('apellido', document.getElementById('apellido').value.trim());
+          formData.append('email', document.getElementById('email').value.trim());
+          formData.append('isActive', document.getElementById('isActive').checked);
+          formData.append('esAdmin', document.getElementById('esAdmin').checked);
 
-                                const url = `/Usuario?handler=Activar&idUsuario=${encodeURIComponent(params.data.id)}`;
+          try {
+            const resp = await fetch('/Usuario?handler=Guardar', {
+              method: 'POST',
+              body: formData,
+              credentials: 'same-origin'
+            });
 
-                                fetch(url, { method: 'GET' })
-                                  .then(() => {
-                                      location.reload();
+            if (!resp.ok) {
+              // Lee texto además de intentar JSON
+              const errText = await resp.text();
+              console.warn('Respuesta 400/500:', errText);
 
-                                  })
-                                  .catch(err => {
-                                    console.error('Error al activar:', err);
-                                  });
-                              });
+              let errJson = {};
+              try { errJson = JSON.parse(errText); } catch {}
+              throw new Error(errJson?.message ?? `Error HTTP ${resp.status}`);
+            }
 
-                              container.appendChild(btnRecepcion);
-                                }
-                            
-                            return container;
-                        }
-                     }
+            const result = await resp.json();
+            if (result?.ok) {
+                console.log('Guardado OK:', result.data);
 
-                ],
-                defaultColDef: {  sortable: true, resizable: true },
-                pagination: true,
-                paginationPageSize: 10,
-                paginationPageSizeSelector: [10, 20, 50, 100]
+                const updatedRow = {
+                    id: Number(document.getElementById('idUsuario').value || 0), // debe ser el mismo ID de la fila
+                    userName: document.getElementById('userName').value.trim(),
+                    nombre: document.getElementById('nombre').value.trim(),
+                    apellido: document.getElementById('apellido').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    isActive: document.getElementById('isActive').checked,
+                    esAdmin: document.getElementById('esAdmin').checked
+                    };
 
-            };
+                  masterGrid.applyTransaction({ update: [ updatedRow ] });
 
 
-            window.masterGrid = agGrid.createGrid(document.querySelector("#gridUsuarios"), masterOptions);
+                  closeUsuarioModal();
 
-            fetch(`/Usuario?handler=Data`)
-                .then(response => response.json())
-                .then(result => {
-                    masterGrid.setGridOption('rowData', result.data);
-                    masterGrid.sizeColumnsToFit();
+                    // Toast de éxito
+                    showToast({
+                      title: 'Usuario guardado',
+                      message: `Se guardó correctamente "${document.getElementById('userName').value}".`,
+                      type: 'success',
+                      delay: 3500
+                    });
 
-                });
+               } else {
+              throw new Error(result?.message ?? 'No se pudo guardar');
+            }
+          } catch (error) {
+            console.error('Error guardando usuario:', error);
+
+            showToast({
+              title: 'Error al guardar',
+              message: error?.message ?? 'Ocurrió un problema inesperado.',
+              type: 'error',
+              delay: 6000
+            });
+          }
+          })
 
         });
     </script>
+
+    <!-- Modal para editar usuario -->
+    <div class="modal fade" id="usuarioModal" tabindex="-1" aria-labelledby="usuarioModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form id="usuarioForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="usuarioModalLabel">
+                            <i class="fa fa-user-edit me-2"></i> Modificar usuario
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" id="idUsuario" name="id" />
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="userName" class="form-label">Usuario</label>
+                                <input type="text" class="form-control" id="userName" name="userName" readonly />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="apellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="apellido" name="apellido" />
+                            </div>
+
+                            <div class="col-12">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" />
+                            </div>
+
+                            <div class="col-md-3 form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="isActive" name="isActive" disabled />
+                                <label class="form-check-label" for="isActive">Activo</label>
+                            </div>
+
+                            <div class="col-md-3 form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="esAdmin" name="esAdmin" disabled />
+                                <label class="form-check-label" for="esAdmin">Es Admin</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" id="btnGrabar">
+                            <i class="fas fa-save me-1"></i> Grabar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        </div>
+
+    <!-- Contenedor de toasts en la esquina inferior derecha -->
+    <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;"></div>
+
+    <script>
+        // Muestra toasts CoreUI en bottom-right
+        function showToast({ title = 'Aviso', message = '', type = 'success', delay = 4000 }) {
+          const container = document.getElementById('toastContainer');
+          if (!container) return;
+
+          const typeClass = {
+            success: 'text-bg-success',
+            error:   'text-bg-danger',
+            warning: 'text-bg-warning',
+            info:    'text-bg-info'
+          }[type] || 'text-bg-secondary';
+
+          const toastEl = document.createElement('div');
+          toastEl.className = `toast align-items-center ${typeClass} border-0`;
+          toastEl.setAttribute('role', 'alert');
+          toastEl.setAttribute('aria-live', 'assertive');
+          toastEl.setAttribute('aria-atomic', 'true');
+
+          toastEl.innerHTML = `
+            <div class="d-flex">
+              <div class="toast-body">
+                <strong>${title}</strong>
+                ${message ? `<div class="small mt-1">${message}</div>` : ''}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-coreui-dismiss="toast" aria-label="Cerrar"></button>
+            </div>
+          `;
+
+          container.appendChild(toastEl);
+
+          const toast = new coreui.Toast(toastEl, { autohide: true, delay });
+          toast.show();
+
+          // Limpia el DOM al cerrarse
+          toastEl.addEventListener('hidden.coreui.toast', () => toastEl.remove());
+        }
+
+        function closeUsuarioModal() {
+            const modalEl = document.getElementById('usuarioModal');
+            if (!modalEl) return;
+
+            // Cerrar con Bootstrap (abre y cierra sin condiciones)
+            if (window.bootstrap?.Modal) {
+              const instance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+              instance.hide();
+            }
+
+            // Limpieza por si algún backdrop/clase quedó pegado
+            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+            document.body.classList.remove('modal-open');
+            modalEl.classList.remove('show');
+            modalEl.setAttribute('aria-hidden', 'true');
+            modalEl.style.display = 'none';
+          }
+
+    </script>
+
+
 </body>
 </html>
+
+<script src="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.0.0/dist/js/coreui.bundle.min.js"></script>

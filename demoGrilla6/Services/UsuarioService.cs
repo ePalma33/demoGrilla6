@@ -22,6 +22,10 @@ namespace demoGrilla6.Services
             return  _repository.OnGetActivarAsync(idUsuario, activar);
         }
 
+        public Task<JsonResult> OnPostGuardarAsync(User usuario)
+        {
+            return _repository.OnPostGuardarAsync(usuario);
+        }
 
     }
 }
