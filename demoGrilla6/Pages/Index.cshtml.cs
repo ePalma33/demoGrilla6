@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Mail;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace demoGrilla6.Pages
 {
@@ -21,12 +22,19 @@ namespace demoGrilla6.Pages
         private readonly RecepcionCabRepository _recepcionRepository;
 
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(string IdEmpresa)
         {
+            //Si viene del combo que cambia la empresa
+            if (IdEmpresa != null)
+            {
+                await CargarTempDataAsync(IdEmpresa);
+                return Page();
+            }
+
             // Solo carga si está vacío o no existe
             if (TempData.Peek("TotalOcPendientes") == null)
             {
-                await CargarTempDataAsync();
+                await CargarTempDataAsync("");
             }
 
             return Page(); // Renderiza la vista Index y el _Layout en el mismo request
@@ -47,8 +55,23 @@ namespace demoGrilla6.Pages
         /// </summary>
         public async Task<JsonResult> OnGetPedidoComprasAsync()
         {
-            var proveedor = User.FindFirst("Proveedor")?.Value;
-            var pedidos = await _pedidoService.GetPedidoComprasAsync(proveedor);
+
+            var json = TempData.Peek("EmpresaSeleccionada") as string; // lee sin consumir TempData
+            Empresa empresaSeleccionada = null;
+
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true // ignora mayúsculas/minúsculas en nombres
+                };
+
+                empresaSeleccionada = JsonSerializer.Deserialize<Empresa>(json, options);
+            }
+
+
+            var proveedor = User.FindFirst("Proveedor")?.Value ?? "";
+            var pedidos = await _pedidoService.GetPedidoComprasAsync(proveedor, empresaSeleccionada.Codigo);
             
             return new JsonResult(new { data = pedidos });
         }
@@ -63,18 +86,40 @@ namespace demoGrilla6.Pages
             if (string.IsNullOrWhiteSpace(purchId))
             {
                 return new JsonResult(new { data = Enumerable.Empty<OrdenCompraDet>() });
-            }
+            }          
 
             var lineas = await _purchLineRepository.GetByPurchIdAsync(purchId);
             return new JsonResult(new { data = lineas });
         }
 
-        public async Task CargarTempDataAsync()
+        [ValidateAntiForgeryToken]
+        public async Task CargarTempDataAsync(string _IdEmpresa)
         {
+            //empresa si viene en vacio cargara la primera que encuentre de lo contrario filtra por la empresa que venga
+            var empresas = (await _pedidoService.GetEmpresasAsync()).ToList();
+            var empresaSeleccionada = new Empresa();
+
+            if (_IdEmpresa != "")
+            {
+                empresaSeleccionada = empresas.FirstOrDefault(f => f.Codigo == _IdEmpresa);
+            }
+            else
+            {
+                empresaSeleccionada = empresas.FirstOrDefault();
+            }
+
+            //TempData["EmpresaSeleccionada"] = empresaSeleccionada;
+            //TempData["Empresas"] = empresas;
+
+
+            TempData["Empresas"] = System.Text.Json.JsonSerializer.Serialize(empresas);
+            TempData["EmpresaSeleccionada"] = System.Text.Json.JsonSerializer.Serialize(empresaSeleccionada);
+
+
             var proveedor = User.FindFirst("Proveedor")?.Value; // Recupera de la sesión
-            var pedidos = await _pedidoService.GetPedidoComprasAsync(proveedor);
-            var ultimoPago = await _pagoFacturaRepository.GetUltimoPagoAsync(proveedor);
-            var recepcionNofacturada = await _recepcionRepository.GetNumeroNoFacturadoAsync(proveedor);
+            var pedidos = await _pedidoService.GetPedidoComprasAsync(proveedor, _IdEmpresa);
+            var ultimoPago = await _pagoFacturaRepository.GetUltimoPagoAsync(proveedor, _IdEmpresa);
+            var recepcionNofacturada = await _recepcionRepository.GetNumeroNoFacturadoAsync(proveedor, _IdEmpresa);
 
             TempData["TotalOcPendientes"] = pedidos.Count(p => p.PurchStatusText == "Pedido abierto");
             TempData["TotalOcRecibido"] = pedidos.Count(p => p.PurchStatusText == "Recibido");

@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
+
+
 namespace demoGrilla6.Services
 {
     public sealed class SmtpEmailSender : IEmailSender
@@ -16,6 +18,8 @@ namespace demoGrilla6.Services
 
         public async Task SendEmailAsync(string to, string subject, string body)
         {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12; // al inicio
+
             using var client = new SmtpClient(_settings.Host, _settings.Port)
             {
                 EnableSsl = _settings.EnableSsl,

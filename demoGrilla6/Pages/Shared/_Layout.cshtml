@@ -1,4 +1,6 @@
-﻿ @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+﻿@using demoGrilla6.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,10 +11,23 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/demoGrilla6.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style >
+
+        @@media (max-width: 768px) {
+            .navbar-brand.fw-bold.d-flex.align-items-center {
+                display: none !important;
+            }
+
+            .container-fluid.px-4{
+                padding-top: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-        <header>
+    <header>
 
         @{
             var totalOc = TempData.Peek("TotalOcPendientes") ?? 0;
@@ -52,10 +67,8 @@
 
         </header>
 
-
     <div class="container-fluid px-4">
         <div class="row g-3 mb-4">
-
 
             <div class="col-6 col-md-6 col-lg-3" onclick="filtrarRecepcionNoFacturada()">
                 <div class="card text-white shadow" style="background-color: #DB7093;">
@@ -106,7 +119,7 @@
                             </div>
                         </div>
                         <hr class="mt-2 mb-2">
-                        <a href="#" class="text-white small stretched-link" onclick="document.getElementById('recepciones-tab').click(); return false;">Ver Guías Pendientes</a>
+                        <a href="#" class="text-white small stretched-link" onclick="document.getElementById('recepciones-tab').click(); return false;">Ordenes De Compra</a>
                     </div>
                 </div>
             </div>
@@ -129,15 +142,66 @@
                 </div>
             </div>
 
-
-
         </div>
 
+        @{
+            var jsonEmpresas = TempData.Peek("Empresas") as string;
+            var jsonSeleccionada = TempData.Peek("EmpresaSeleccionada") as string;
+
+            var listEmpresa = !string.IsNullOrEmpty(jsonEmpresas)
+            ? System.Text.Json.JsonSerializer.Deserialize<List<Empresa>>(jsonEmpresas)
+            : new List<Empresa>();
+
+            var empresaSeleccionada = !string.IsNullOrEmpty(jsonSeleccionada)
+            ? System.Text.Json.JsonSerializer.Deserialize<Empresa>(jsonSeleccionada)
+            : null;
+        }
+
+
+        <nav class=" navbar-expand-lg ">
+            <div class="container-fluid d-flex align-items-center">
+                <!-- Otros elementos del navbar -->
+                <!-- Bloque del combo alineado a la derecha -->
+                <div class="ms-auto d-flex align-items-center">
+                    <form id="formEmpresa" method="get" asp-page="/Index" class="d-flex align-items-center">
+                        <label for="selectEmpresas" class="mb-0 me-2">Empresa</label>
+
+                        <select id="selectEmpresas"
+                                name="IdEmpresa"
+                                class="form-select form-select-sm"
+                                style="min-width: 320px">
+                            @foreach (var empresa in listEmpresa)
+                            {
+                                <option value="@empresa.Codigo" selected="@(empresa.Codigo == empresaSeleccionada.Codigo)">
+                                    @($"{empresa.Nombre} {empresa.Rut}")
+                                </option>
+                            }
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </nav>
+
+
+        <script>
+            (function () {
+                const sel = document.getElementById('selectEmpresas');
+                if (!sel) return;
+                sel.addEventListener('change', function () {
+                    const form = document.getElementById('formEmpresa');
+                    if (form) form.submit(); // Esto navega a /Index?empresa=...
+                });
+            })();
+        </script>
+
+
         <!--  Aquí se renderiza el contenido de cada página -->
-        <main role="main" class="pb-3">
+        <main role="main" class="pb-3" style="margin-top: -40px;">
             @RenderBody()
         </main>
     </div>
+
+
 
     <script>
 

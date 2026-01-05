@@ -12,14 +12,14 @@ namespace demoGrilla6.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<Factura>> GetInvoicesAsync(string proveedor)
+        public async Task<IEnumerable<Factura>> GetInvoicesAsync(string proveedor, string empresa)
         {
-            return await _repository.GetAllAsync(proveedor);
+            return await _repository.GetAllAsync(proveedor, empresa);
         }
 
-        public async Task<IEnumerable<Factura>> GetInvoicesByPurchIdAsync(string purchId)
+        public async Task<IEnumerable<Factura>> GetInvoicesByPurchIdAsync(string purchId, string empresa)
         {
-            return await _repository.GetByPurchIdAsync(purchId);
+            return await _repository.GetByPurchIdAsync(purchId, empresa);
         }
 
     }

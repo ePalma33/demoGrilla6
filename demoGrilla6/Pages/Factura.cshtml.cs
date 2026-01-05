@@ -1,7 +1,8 @@
+using demoGrilla6.Models;
+using demoGrilla6.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using demoGrilla6.Services;
-using demoGrilla6.Models;
+using System.Text.Json;
 
 namespace demoGrilla6.Pages
 {
@@ -32,20 +33,33 @@ namespace demoGrilla6.Pages
 
         public async Task<JsonResult> OnGetFacturaAsync(string purchId)
         {
-            try
+            try                                    
             {
                 IEnumerable<Factura> facturas;
                 var proveedor = User.FindFirst("Proveedor")?.Value; // Recupera de la sesión
 
+                var json = TempData.Peek("EmpresaSeleccionada") as string; // lee sin consumir TempData
+                Empresa empresaSeleccionada = null;
+
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true // ignora mayúsculas/minúsculas en nombres
+                    };
+
+                    empresaSeleccionada = JsonSerializer.Deserialize<Empresa>(json, options);
+                }
+
                 if (string.IsNullOrWhiteSpace(purchId))
                 {
                     //  Si no hay parámetro, traer todos
-                    facturas = await _facturaService.GetInvoicesAsync(proveedor);
+                    facturas = await _facturaService.GetInvoicesAsync(proveedor, empresaSeleccionada.Codigo);
                 }
                 else
                 {
                     //  Si hay parámetro, filtrar
-                    facturas = await _facturaService.GetInvoicesByPurchIdAsync(purchId);
+                    facturas = await _facturaService.GetInvoicesByPurchIdAsync(purchId, empresaSeleccionada.Codigo);
                 }
 
                 return new JsonResult(new { data = facturas });
@@ -94,8 +108,9 @@ namespace demoGrilla6.Pages
             try
             {
                 IEnumerable<UltimoPago> ultimosPagos;
+                string empresa = TempData.Peek("EmpresaSeleccionada") as string ?? "";
 
-                ultimosPagos = await _pagoFacturaService.GetUltimoPagoAsync(username);
+                ultimosPagos = await _pagoFacturaService.GetUltimoPagoAsync(username, empresa);
 
                 return new JsonResult(new { data = ultimosPagos });
             }

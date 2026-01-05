@@ -1,12 +1,13 @@
 using Dapper;
 using demoGrilla6.Configuration;
+using demoGrilla6.Models;
 using demoGrilla6.Services; 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using System.Net;
 using System.Text.Encodings.Web;
-using demoGrilla6.Models;
 
 namespace demoGrilla6.Pages
 {
@@ -39,9 +40,13 @@ namespace demoGrilla6.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
+
+            // Fuerza TLS 1.2 para todas las conexiones (SMTP, HTTP, etc.)
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             if (string.IsNullOrWhiteSpace(Email))
             {
-       
+
                 ModelState.AddModelError(string.Empty, "Debes ingresar tu correo.");
                 return Page();
             }
@@ -77,6 +82,7 @@ namespace demoGrilla6.Pages
                 {resetUrl}
 
                 Si no solicitaste este cambio, ignora este correo.";
+
 
             await _emailSender.SendEmailAsync(user.Email, subject, body);
 

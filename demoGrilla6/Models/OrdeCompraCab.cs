@@ -17,4 +17,13 @@ namespace demoGrilla6.Models
 
         //public DateTime CreatedDateTime { get; set; }
     }
+
+    public class Empresa
+    {
+        public string Nombre { get; set; }
+        public string Codigo { get; set; }
+        public string Rut { get; set; }
+
+    }
+
 }

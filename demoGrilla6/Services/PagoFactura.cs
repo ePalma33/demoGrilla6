@@ -22,9 +22,9 @@ namespace demoGrilla6.Services
             return await _repository.GetTotalPendienteAsync(idFactura, proveedor);
         }
 
-        public async Task<IEnumerable<UltimoPago>> GetUltimoPagoAsync( string proveedor)
+        public async Task<IEnumerable<UltimoPago>> GetUltimoPagoAsync( string proveedor, string empresa)
         {
-            return await _repository.GetUltimoPagoAsync( proveedor);
+            return await _repository.GetUltimoPagoAsync( proveedor, empresa);
         }
 
     }

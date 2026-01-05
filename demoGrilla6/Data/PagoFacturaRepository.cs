@@ -29,7 +29,8 @@ namespace demoGrilla6.Data
 
                                 WHERE VT.AccountNum = @proveedor
                                 AND VT.INVOICE = @idFactura
-                                AND VT.VOUCHER = @voucher";
+                                AND VT.VOUCHER = @voucher
+                                AND VS.SettleAmountCur <> 0";
 
                 return await conn.QueryAsync<PagoFactura>(query, new { IdFactura = idFactura, Proveedor = proveedor, Voucher = voucher });
             }
@@ -80,7 +81,7 @@ namespace demoGrilla6.Data
             }
         }
 
-        public async Task<IEnumerable<UltimoPago>> GetUltimoPagoAsync(string proveedor)
+        public async Task<IEnumerable<UltimoPago>> GetUltimoPagoAsync(string proveedor, string empresa)
         {
             using (var conn = new SqlConnection(_connectionString))
             {
@@ -95,9 +96,10 @@ namespace demoGrilla6.Data
                                 INNER JOIN VendSettlement VS ON VS.TransRecId = VT.RecId
                                 INNER JOIN VendTrans VT2 ON VT2.RecId = VS.OffsetRecId
                                 WHERE VT.AccountNum = @Proveedor
+                                AND VT.DATAAREAID = @Empresa
                                 ORDER BY VT2.TransDate DESC;
                                 ";
-                return await conn.QueryAsync<UltimoPago>(query, new { Proveedor = proveedor });
+                return await conn.QueryAsync<UltimoPago>(query, new { Proveedor = proveedor, Empresa = empresa });
             }
         }
 

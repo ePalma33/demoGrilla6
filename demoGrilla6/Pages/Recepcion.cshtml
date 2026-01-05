@@ -66,7 +66,8 @@
                 columnDefs: [
                     { field: "ctaFacturacion", headerName: "Cta Facturación", minWidth: 100, hide: true, filter: true },
                     { field: "pedidoCompra", headerName: "Pedido Compra", minWidth: 100, filter: true },
-                    { field: "recepcionProducto", headerName: "HES", minWidth: 100, filter: true },
+                    { field: "hes", headerName: "HES", minWidth: 100, filter: true },
+                    { field: "recepcionProducto", headerName: "Id Recepción", minWidth: 100, filter: true },
                     { field: "fecha", headerName: "Fecha", minWidth: 100, valueFormatter: formatoFechaDiaMesAño, filter: true },
                     { field: "factura", headerName: "Factura", minWidth: 100, filter: true },
                     { field: "estaFacturado", headerName: "Esta Facturado", minWidth: 100, filter: true }
@@ -85,7 +86,7 @@
                 domLayout: 'autoHeight', // Permite que la altura se ajuste al contenido
                 columnDefs: [
                     { field: "articulo", headerName: "Articulo", minWidth: 100  },
-                    { field: "descripcion", headerName: "Descripcion", minWidth: 750  },
+                    { field: "descripcion", headerName: "Descripcion", minWidth: 450  },
                     { field: "pedido", headerName: "Pedido", minWidth: 80  },
                     { field: "recibido", headerName: "Recibido", minWidth: 80  },
                     { field: "importe", headerName: "Importe", minWidth: 100,
@@ -93,8 +94,11 @@
                             const v = Number(params.value);
                             if (isNaN(v)) return '';
 
-                            const enteroConMiles = Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                            return `$ ${enteroConMiles}`;
+                            // Formato con dos decimales, coma decimal y puntos para miles
+                            const parts = v.toFixed(2).split('.'); // ["entero", "decimales"]
+                            const enteroConMiles = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+                            return `${enteroConMiles},${parts[1]}`; // Ej: 1.234,56
                         }
                     },
                     { field: "cantidadRestante", headerName: "Restantes", minWidth: 100,
@@ -102,8 +106,6 @@
 
                             const v = Number(params.value);
                             if (isNaN(v)) return '';
-
-                            const moneda = params.data.currencyCode;
 
                            // Formato con dos decimales, coma decimal y puntos para miles
                             const parts = v.toFixed(2).split('.'); // ["entero", "decimales"]
@@ -113,8 +115,10 @@
 
                         }
                     }
+                    
                 ],
-                defaultColDef: { sortable: true, resizable: true }
+                defaultColDef: { sortable: true, resizable: true }  ,
+                suppressLoadingOverlay: true
             };
 
             window.masterGrid = agGrid.createGrid(document.querySelector("#gridPackingSlip"), masterOptions);
@@ -123,6 +127,7 @@
             fetch(`/Recepcion?handler=PackingSlips&purchId=${encodeURIComponent('@Model.PurchId')}`)
                 .then(response => response.json())
                 .then(result => {
+                    debugger
                     masterGrid.setGridOption('rowData', result.data);
                     masterGrid.sizeColumnsToFit();
 

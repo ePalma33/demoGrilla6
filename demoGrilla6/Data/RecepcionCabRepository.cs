@@ -13,7 +13,7 @@ namespace demoGrilla6.Data
             _connectionString = connectionString;
         }
 
-        public async Task<IEnumerable<RecepcionCab>> GetAllAsync(string proveedor)
+        public async Task<IEnumerable<RecepcionCab>> GetAllAsync(string proveedor, string empresa)
         {
 
             using (var conn = new SqlConnection(_connectionString))
@@ -26,7 +26,8 @@ namespace demoGrilla6.Data
                         vpsj.PackingSlipId AS recepcionProducto,
                         vpsj.DeliveryDate AS fecha,
                         ISNULL(vij.INVOICEID,'') AS factura,
-                        CASE WHEN vij.INVOICEID IS NULL THEN 0 ELSE 1 END AS estaFacturado
+                        CASE WHEN vij.INVOICEID IS NULL THEN 0 ELSE 1 END AS estaFacturado,
+                        vpv.Internalpackingslipid AS HES
                     FROM VendPackingSlipJour vpsj
                     LEFT JOIN (
                         SELECT PackingSlipId, MIN(SOURCEDOCUMENTLINE) AS SOURCEDOCUMENTLINE
@@ -40,8 +41,26 @@ namespace demoGrilla6.Data
                     LEFT JOIN VendInvoiceJour vij 
                         ON vij.INVOICEID = vit.INVOICEID 
                         AND vij.INVOICEACCOUNT = vpsj.InvoiceAccount
+                    LEFT JOIN VendPackingSlipVersion vpv ON vpv.VENDPACKINGSLIPJOUR = vpsj.RecId
+                    OUTER APPLY (
+                        SELECT TOP 1
+                            vpst2.INVENTQTY
+		
+                        FROM VendPackingSlipTrans AS vpst2
+                        WHERE vpst2.VENDPACKINGSLIPJOUR = vpsj.RECID
+                        ORDER BY vpst2.RecId ASC  -- Puedes cambiar el orden si quieres la primera línea o la última
+                    ) AS vpst3
+
                     WHERE 
-                        vpsj.InvoiceAccount = '" + proveedor + "'" +
+
+                    vpv.VersionDateTime = (
+                        SELECT MAX(V2.VersionDateTime)
+                        FROM VendPackingSlipVersion AS V2
+                        WHERE V2.VENDPACKINGSLIPJOUR = vpv.VENDPACKINGSLIPJOUR
+                    )
+                     and vpst3.INVENTQTY <> 0
+                     AND vpsj.InvoiceAccount = '" + proveedor + "'" +
+                   " AND vpsj.DATAAREAID = '" + empresa + "' " +
                     "Order By estaFacturado";
 
 
@@ -64,7 +83,8 @@ namespace demoGrilla6.Data
                         CASE 
                             WHEN vij.INVOICEID IS NULL THEN 0 
                             ELSE 1 
-                        END AS estaFacturado
+                        END AS estaFacturado,
+                        vpv.Internalpackingslipid AS HES
                     FROM VendPackingSlipJour vpsj
                     OUTER APPLY (
                         SELECT TOP 1 SOURCEDOCUMENTLINE
@@ -74,15 +94,25 @@ namespace demoGrilla6.Data
                     LEFT JOIN VendInvoicePackingSlipQuantityMatch vipsqm ON vipsqm.PACKINGSLIPSOURCEDOCUMENTLINE = vpst.SOURCEDOCUMENTLINE
                     LEFT JOIN VendInvoiceTrans vit on vit.SOURCEDOCUMENTLINE = vipsqm.INVOICESOURCEDOCUMENTLINE
                     LEFT JOIN VendInvoiceJour  vij on vij.INVOICEID = vit.INVOICEID and vij.INVOICEACCOUNT = vpsj.InvoiceAccount
-                    where 
-                        vpsj.PurchId = '" + purchId + "'";
-                    
+                    LEFT JOIN VendPackingSlipVersion vpv ON vpv.VENDPACKINGSLIPJOUR = vpsj.RecId
+                    OUTER APPLY (
+                        SELECT TOP 1
+                            vpst2.INVENTQTY
+		
+                        FROM VendPackingSlipTrans AS vpst2
+                        WHERE vpst2.VENDPACKINGSLIPJOUR = vpsj.RECID
+                        ORDER BY vpst2.RecId ASC  -- Puedes cambiar el orden si quieres la primera línea o la última
+                    ) AS vpst3
 
+                    where 
+                        vpsj.PurchId = '" + purchId + "'" +
+                  " and vpst3.INVENTQTY <> 0";
+                    
                 return await conn.QueryAsync<RecepcionCab>(query, new { PurchId = purchId });
             }
         }
 
-        public async Task<IEnumerable<RecepcionNoFacturada>> GetNumeroNoFacturadoAsync(string proveedor)
+        public async Task<IEnumerable<RecepcionNoFacturada>> GetNumeroNoFacturadoAsync(string proveedor, string empresa)
         {
 
             using (var conn = new SqlConnection(_connectionString))
@@ -92,6 +122,7 @@ namespace demoGrilla6.Data
                     SELECT COUNT(*) AS numero
                     FROM VendPackingSlipJour AS vpsj
                     WHERE vpsj.InvoiceAccount = @Proveedor
+                      AND vpsj.DATAAREAID = @Empresa
                       AND NOT EXISTS (
                           SELECT 1
                           FROM VendPackingSlipTrans AS tt
@@ -105,7 +136,7 @@ namespace demoGrilla6.Data
                           WHERE tt.PackingSlipId = vpsj.PackingSlipId
                       )";
 
-                return await conn.QueryAsync<RecepcionNoFacturada>(query, new { Proveedor = proveedor });
+                return await conn.QueryAsync<RecepcionNoFacturada>(query, new { Proveedor = proveedor, Empresa = empresa });
             }
         }
     }

@@ -24,4 +24,10 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
   </ItemGroup>
 
+	
+<ItemGroup Condition="'$(Configuration)' == 'Release'">
+  <None Include="Data\FacturaRepository.cs" />
+</ItemGroup>
+
+
 </Project>

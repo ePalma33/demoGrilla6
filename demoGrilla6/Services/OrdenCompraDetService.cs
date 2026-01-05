@@ -12,9 +12,9 @@ namespace demoGrilla6.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<OrdeCompraCab>> GetPedidoComprasAsync(string proveedor)
+        public async Task<IEnumerable<OrdeCompraCab>> GetPedidoComprasAsync(string proveedor, string empresa)
         {
-            var pedidos = await _repository.GetAllAsync(proveedor);
+            var pedidos = await _repository.GetAllAsync(proveedor, empresa);
 
             //if (!string.IsNullOrEmpty(search))
             //{
@@ -24,5 +24,13 @@ namespace demoGrilla6.Services
 
             return pedidos;
         }
+
+        public async Task<IEnumerable<Empresa>> GetEmpresasAsync()
+        {
+            var pedidos = await _repository.GetEmpresasAsync();
+
+            return pedidos;
+        }
+
     }
 }

@@ -13,7 +13,7 @@ namespace demoGrilla6.Data
             _connectionString = connectionString;
         }
 
-        public async Task<IEnumerable<OrdeCompraCab>> GetAllAsync(string proveedor)
+        public async Task<IEnumerable<OrdeCompraCab>> GetAllAsync(string proveedor, string empresa)
         {
             using (var conn = new SqlConnection(_connectionString))
             {
@@ -22,7 +22,7 @@ namespace demoGrilla6.Data
 
                 if (proveedor != "admin")
                 {
-                    filtroProveedor = "AND pt.ORDERACCOUNT = '" + proveedor + "'";
+                    filtroProveedor = " pt.ORDERACCOUNT = '" + proveedor + "'";
                 }
 
                 string query = @"SELECT pt.PURCHID, pt.PURCHNAME, pt.ORDERACCOUNT, pt.CURRENCYCODE, pt.PURCHSTATUS, " + 
@@ -50,11 +50,34 @@ namespace demoGrilla6.Data
                                 "FROM PURCHTABLE pt " +
                                 "left join PurchTotalsSummary pts on pts.PURCHID = pt.PURCHID " +
                                 "where " +
-                                    "1=1 " + filtroProveedor +
+                                 filtroProveedor +
+                               " AND pt.DATAAREAID = '" + empresa + "'" +
                                " Order By PURCHID desc";
 
                 return await conn.QueryAsync<OrdeCompraCab>(query);
             }
         }
+
+        public async Task<IEnumerable<Empresa>> GetEmpresasAsync()
+        {
+            using (var conn = new SqlConnection(_connectionString))
+            {
+
+                string query = @"
+                        SELECT distinct p.NAMEALIAS Nombre , d.ID Codigo, P.COREGNUM Rut
+                        FROM DATAAREA d
+                        INNER JOIN DIRPARTYTABLE p ON d.NAME = p.NAME  
+                        where
+                        d.ID in (select distinct DATAAREAid
+                        from PURCHTABLE)
+                        and P.COREGNUM  is not null
+
+                ";
+
+                return await conn.QueryAsync<Empresa>(query);
+            }
+        }
+
+
     }
 }

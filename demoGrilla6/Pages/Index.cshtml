@@ -107,8 +107,12 @@
     </style>
 
 
+
+
 </head>
 <body>
+
+
 
     <div class="container-fluid px-2">
         <div class="row g-3 justify-content-left">
@@ -698,7 +702,9 @@
                     },
                     { field: "deliveryDate", headerName: "Fecha Entrega", valueFormatter: formatoFechaDiaMesAño, minWidth: 120}
                 ],
-                defaultColDef: { flex: 1, sortable: true}
+                defaultColDef: { flex: 1, sortable: true}  ,
+                suppressLoadingOverlay: true
+
             };
 
             window.masterGrid = agGrid.createGrid(document.querySelector("#gridMaster"), masterOptions);

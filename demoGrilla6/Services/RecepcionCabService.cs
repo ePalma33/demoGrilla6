@@ -12,9 +12,9 @@ namespace demoGrilla6.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<RecepcionCab>> GetPackingSlipsAsync(string proveedor)
+        public async Task<IEnumerable<RecepcionCab>> GetPackingSlipsAsync(string proveedor, string empresa)
         {
-            return await _repository.GetAllAsync(proveedor);
+            return await _repository.GetAllAsync(proveedor,empresa);
         }
 
         public async Task<IEnumerable<RecepcionCab>> GetPackingSlipByPurchIdAsync(string purchId)
@@ -22,9 +22,9 @@ namespace demoGrilla6.Services
             return await _repository.GetByPurchIdAsync(purchId);
         }
 
-        public async Task<IEnumerable<RecepcionNoFacturada>> GetNumeroNoFacturadoAsync(string username)
+        public async Task<IEnumerable<RecepcionNoFacturada>> GetNumeroNoFacturadoAsync(string username, string empresa  )
         {
-            return await _repository.GetNumeroNoFacturadoAsync(username);
+            return await _repository.GetNumeroNoFacturadoAsync(username , empresa);
         }
     }
 }

@@ -1,11 +1,18 @@
-﻿using demoGrilla6.Data;
+﻿using demoGrilla6.Configuration;
+using demoGrilla6.Data;
 using demoGrilla6.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using demoGrilla6.Configuration;
+using System.Net;
 
+ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 var builder = WebApplication.CreateBuilder(args);
+
+
+System.Diagnostics.Trace.Listeners.Add(
+    new System.Diagnostics.TextWriterTraceListener(@"C:\LogsSitioProveedor\systemnet.log"));
+System.Diagnostics.Trace.AutoFlush = true;
 
 
 // Agregar servicios de autenticación y cookies

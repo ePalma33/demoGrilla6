@@ -10,7 +10,7 @@
         public string Factura { get; set; }
 
         public bool EstaFacturado { get; set; }
-
+        public string Hes { get; set; }
 
 
     }

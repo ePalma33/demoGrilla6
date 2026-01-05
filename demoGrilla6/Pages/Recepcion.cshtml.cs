@@ -2,6 +2,7 @@ using demoGrilla6.Models;
 using demoGrilla6.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Text.Json;
 
 namespace demoGrilla6.Pages
 {
@@ -36,10 +37,23 @@ namespace demoGrilla6.Pages
                 IEnumerable<RecepcionCab> slips;
                 var proveedor = User.FindFirst("Proveedor")?.Value; // Recupera de la sesión
 
+                var json = TempData.Peek("EmpresaSeleccionada") as string; // lee sin consumir TempData
+                Empresa empresaSeleccionada = null;
+
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true // ignora mayúsculas/minúsculas en nombres
+                    };
+
+                    empresaSeleccionada = JsonSerializer.Deserialize<Empresa>(json, options);
+                }
+
                 if (string.IsNullOrWhiteSpace(purchId))
                 {
                     //  Si no hay parámetro, traer todos
-                    slips = await _jourService.GetPackingSlipsAsync(proveedor);
+                    slips = await _jourService.GetPackingSlipsAsync(proveedor, empresaSeleccionada.Codigo);
                 }
                 else
                 {
@@ -80,8 +94,9 @@ namespace demoGrilla6.Pages
             {
                 IEnumerable<RecepcionNoFacturada> noFacturadas;
                 var username = HttpContext.Session.GetString("Username"); // Recupera de la sesión
+                string empresa = TempData.Peek("EmpresaSeleccionada") as string ?? "";
 
-                noFacturadas = await _jourService.GetNumeroNoFacturadoAsync(username);
+                noFacturadas = await _jourService.GetNumeroNoFacturadoAsync(username, empresa);
 
                 return new JsonResult(new { data = noFacturadas });
             }

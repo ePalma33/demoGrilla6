@@ -91,22 +91,22 @@
                     { field: "asiento", hide: false},
                     { field: "numFactura", headerName: "Factura", minWidth: 80, filter: true },
                     { field: "fechaDocumento", headerName: "Fecha Documento", filter: true,valueFormatter: formatoFechaDiaMesAño, minWidth: 100 },
-                    { field: "correlativoInterno", headerName: "Correlativo Interno", minWidth: 100, hide: true  },
+                    // { field: "correlativoInterno", headerName: "Correlativo Interno", minWidth: 100, hide: true  },
                     { field: "tipoDocumento", headerName: "Tipo Documento", filter: true, minWidth: 100 },
                     { field: "cuentaFacturacion", headerName: "Cuenta Facturación", minWidth: 100, filter: true, hide: true },
                     { field: "ordenCompra", headerName: "Orden Compra", minWidth: 100 },
                     { field: "divisa", headerName: "Divisa", minWidth: 70, maxWidth: 70},
-                    { field: "importeFactura", headerName: "Importe", minWidth: 100, maxWidth: 120, cellStyle: { textAlign: 'right' },
+                    { field: "importeFactura", headerName: "Importe", minWidth: 120, maxWidth: 120, cellStyle: { textAlign: 'right' },
                         valueFormatter: function (params) {
                                 return montoMonedaFormateado(params,params.data.divisa)
                         }
                     },
-                    { field: "impuesto", headerName: "Impuesto", minWidth: 70, maxWidth: 100,cellStyle: { textAlign: 'right' },
+                    { field: "impuesto", headerName: "Impuesto", minWidth: 100, maxWidth: 100,cellStyle: { textAlign: 'right' },
                         valueFormatter: function (params) {
                                 return montoMonedaFormateado(params,params.data.divisa)
                         }
                     },
-                    { field: "montoPendiente", headerName: "Saldo", minWidth: 100, maxWidth: 120, cellStyle: { textAlign: 'right' },
+                    { field: "montoPendiente", headerName: "Saldo", minWidth: 120, maxWidth: 120, cellStyle: { textAlign: 'right' },
                         valueFormatter: function (params) {
                                 return montoMonedaFormateado(params,params.data.divisa)
                         }
@@ -118,7 +118,7 @@
                     { field: "fechaVencimiento", headerName: "Fecha Vencimiento",valueFormatter: formatoFechaDiaMesAño, minWidth: 100 },
 
                     {
-                        headerName: "Acción", colId: "acciones", minWidth: 110,
+                        headerName: "Acción", colId: "acciones", minWidth: 70,
                         cellRenderer: function (params) {
                         const container = document.createElement('div');
                         container.style.display = 'flex';
@@ -173,13 +173,27 @@
 
             const urlParams = new URLSearchParams(window.location.search);
 
-            // Cargar facturas por PurchId
-            fetch(`/Factura?handler=Factura&purchId=${encodeURIComponent('@Model.PurchId')}`)
-                .then(response => response.json())
-                .then(result => {
-                    gridDiv.setGridOption('rowData', result.data);
-                    gridDiv.sizeColumnsToFit();
+
+        // Cargar facturas por PurchId
+        fetch(`/Factura?handler=Factura&purchId=${encodeURIComponent('@Model.PurchId')}`)
+            .then(response => {
+                if (!response.ok) {
+                    // Si la respuesta no es correcta, lanzamos un error
+                    throw new Error(`Error en la respuesta: ${response.status} ${response.statusText}`);
+                }
+                debugger;
+                return response.json();
+            })
+            .then(result => {
+                gridDiv.setGridOption('rowData', result.data);
+                gridDiv.sizeColumnsToFit();
+            })
+            .catch(error => {
+                // Imprimir el error en la consola
+                console.error('Ocurrió un error al cargar las facturas:', error);
             });
+        
+
         });
     </script>
 
@@ -211,7 +225,7 @@
 
                 const gridOptions = {
                 columnDefs: [
-                    { field: "numeroFactura", headerName: "N° Factura", filter: true, minWidth: 80 },
+                    { field: "numeroFactura", headerName: "N° Factura", filter: true, minWidth: 120 },
                     { field: "fechaFactura", headerName: "Fecha Factura", minWidth: 80, valueFormatter: formatoFechaDiaMesAño},
                     { field: "proveedor", headerName: "Proveedor", minWidth: 100 },
                     { field: "numeroPago", headerName: "N° Pago", minWidth: 160 },

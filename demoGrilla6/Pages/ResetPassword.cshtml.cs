@@ -19,6 +19,7 @@ namespace demoGrilla6.Pages
             _connString = config.GetConnectionString("UsersConnection");
         }
 
+
         [BindProperty(SupportsGet = true)]
         public long Uid { get; set; }
 
@@ -38,7 +39,7 @@ namespace demoGrilla6.Pages
                 return BadRequest("Enlace inválido.");
             }
 
-            return Page();
+             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -49,15 +50,10 @@ namespace demoGrilla6.Pages
                 return Page();
             }
 
-            if (string.IsNullOrWhiteSpace(NewPassword) || NewPassword.Length < 8)
-            {
-                ModelState.AddModelError(string.Empty, "La contraseña debe tener al menos 8 caracteres.");
-                return Page();
-            }
-
             if (NewPassword != ConfirmPassword)
             {
-                ModelState.AddModelError(string.Empty, "Las contraseñas no coinciden.");
+                TempData["ShowErrorToast"] = true;
+                TempData["ErrorToastText"] = "Las contraseñas no coinciden.";
                 return Page();
             }
 
@@ -72,6 +68,10 @@ namespace demoGrilla6.Pages
             if (prt is null || prt.Used || prt.ExpiresAt <= DateTime.UtcNow)
             {
                 ModelState.AddModelError(string.Empty, "El enlace es inválido o ha expirado.");
+
+                TempData["ShowErrorToast"] = true;
+                TempData["ErrorToastText"] = "El enlace es inválido o ha expirado.";
+
                 return Page();
             }
 
@@ -91,7 +91,10 @@ namespace demoGrilla6.Pages
                 WHERE Id = @Id",
                 new { Id = prt.Id });
 
-            return RedirectToPage("/ResetPasswordConfirmation");
+            TempData["ShowSavedModal"] = true;
+            TempData["SavedModalText"] = "Se ha cambiado la contraseña correctamente";
+
+            return RedirectToPage("/Login");
         }
 
         private static string HashPassword(string password, string salt)
